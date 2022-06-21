@@ -14,6 +14,13 @@
 #include "Gibs.hpp"
 #include "Explosion.hpp"
 #include "Grid.hpp"
+#include "Shrykull.hpp"
+#include "Electrocute.hpp"
+#include "ZapLine.hpp"
+#include "ParticleBurst.hpp"
+#include "Flash.hpp"
+#include "PossessionFlicker.hpp"
+#include "AbilityRing.hpp"
 
 Grenade* Grenade::ctor_447F70(FP xpos, FP ypos, s16 numGrenades, s16 bBlowUpOnCollision, s16 unused, BaseGameObject* pOwner)
 {
@@ -44,6 +51,10 @@ Grenade* Grenade::ctor_447F70(FP xpos, FP ypos, s16 numGrenades, s16 bBlowUpOnCo
 
     field_138_pOwner = pOwner;
     field_130_unused = unused;
+
+
+    obj_being_zapped_id = -1;
+    zap_line_id = -1;
 
     return this;
 }
@@ -278,7 +289,7 @@ void Grenade::vTimeToExplodeRandom_4480A0()
 
 void Grenade::BlowUp_4483C0(s16 bSmallExplosion)
 {
-    auto pExplosion = ae_new<Explosion>();
+    /*auto pExplosion = ae_new<Explosion>();
     if (pExplosion)
     {
         pExplosion->ctor_4A1200(
@@ -287,9 +298,9 @@ void Grenade::BlowUp_4483C0(s16 bSmallExplosion)
             field_CC_sprite_scale,
             bSmallExplosion);
         field_11C_explosion_id = pExplosion->field_8_object_id;
-    }
+    }*/
 
-    field_20_animation.field_4_flags.Clear(AnimFlags::eBit3_Render);
+    // field_20_animation.field_4_flags.Clear(AnimFlags::eBit3_Render);
 
     field_120_state = GrenadeStates::eWaitForExplodeEnd_6;
 
@@ -344,10 +355,62 @@ s16 Grenade::TimeToBlowUp_448350()
     return 1;
 }
 
+s16 Grenade::CanElectrocute(BaseGameObject* pObj)
+{
+    switch (pObj->Type())
+    {
+        case AETypes::eCrawlingSlig_26:
+        case AETypes::eNeverSet_40:
+        case AETypes::eFlyingSlig_54:
+        case AETypes::eGlukkon_67:
+        case AETypes::eMudokon2_81:
+        case AETypes::eParamite_96:
+        case AETypes::eMudokon_110:
+        case AETypes::eScrab_112:
+        case AETypes::eSlig_125:
+        case AETypes::eSlog_126:
+        case AETypes::eAbe_69:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+s16 Grenade::CanKill(BaseAnimatedWithPhysicsGameObject* pObj)
+{
+    if (
+            (
+                pObj->Type() == AETypes::eTimedMine_or_MovingBomb_10 ||
+                pObj->Type() == AETypes::eMine_88 ||
+                pObj->Type() == AETypes::eUXB_143 ||
+                pObj->Type() == AETypes::eSlig_125 ||
+                pObj->Type() == AETypes::eFlyingSlig_54 ||
+                pObj->Type() == AETypes::eCrawlingSlig_26 ||
+                pObj->Type() == AETypes::eSlog_126 ||
+                pObj->Type() == AETypes::eGlukkon_67 ||
+                pObj->Type() == AETypes::eSecurityClaw_47 ||
+                pObj->Type() == AETypes::eSecurityOrb_83 ||
+                pObj->Type() == AETypes::eAbe_69 ||
+                pObj->Type() == AETypes::eMudokon_110 ||
+                pObj->Type() == AETypes::eMudokon2_81 ||
+                pObj->Type() == AETypes::eParamite_96 ||
+                pObj->Type() == AETypes::eScrab_112
+            ) && !pObj->field_6_flags.Get(BaseGameObject::eDead_Bit3)
+        )
+    {
+        auto objCamera = pObj->Is_In_Current_Camera_424A70(); // TODO fix dis shiz
+        auto thisCamera = Is_In_Current_Camera_424A70();
+        return objCamera == thisCamera;
+    }
+
+    return 0;
+}
+
 void Grenade::vUpdate_4489C0()
 {
-    auto pExplosion = sObjectIds_5C1B70.Find_449CF0(field_11C_explosion_id);
-
+    //auto pExplosion = sObjectIds_5C1B70.Find_449CF0(field_11C_explosion_id);
+    auto pExistingBeingZappedObj = static_cast<BaseAliveGameObject*>(sObjectIds_5C1B70.Find_449CF0(obj_being_zapped_id));
+    auto pExistingZapLine = static_cast<ZapLine*>(sObjectIds_5C1B70.Find_449CF0(zap_line_id));
 
     if (Event_Get_422C00(kEventDeathReset))
     {
@@ -485,15 +548,174 @@ void Grenade::vUpdate_4489C0()
             break;
 
         case GrenadeStates::eWaitForExplodeEnd_6:
-            if (!pExplosion || pExplosion->field_6_flags.Get(BaseGameObject::eDead_Bit3))
+            for (s32 i = 0; i < gBaseAliveGameObjects_5C1B7C->Size(); i++)
             {
-                field_120_state = GrenadeStates::eExploded_7;
-                field_11C_explosion_id = -1;
+                BaseAliveGameObject* pObj = gBaseAliveGameObjects_5C1B7C->ItemAt(i);
+                if (!pObj)
+                {
+                    break;
+                }
+
+                if (CanKill(pObj) && !pObj->field_114_flags.Get(Flags_114::e114_Bit5_ZappedByShrykull))
+                {
+                    obj_being_zapped_id = pObj->field_8_object_id;
+
+                    PSX_RECT objRect = {};
+                    pObj->vGetBoundingRect_424FD0(&objRect, 1);
+
+                    PSX_RECT ourRect = {};
+                    vGetBoundingRect_424FD0(&ourRect, 1);
+
+                    if (pExistingZapLine)
+                    {
+                        pExistingZapLine->CalculateSourceAndDestinationPositions_4CCAD0(
+                            FP_FromInteger((ourRect.x + ourRect.w) / 2),
+                            FP_FromInteger((ourRect.y + ourRect.h) / 2),
+                            FP_FromInteger((objRect.x + objRect.w) / 2),
+                            FP_FromInteger((objRect.y + objRect.h) / 2));
+                    }
+                    else
+                    {
+                        auto pZapLine = ae_new<ZapLine>();
+                        if (pZapLine)
+                        {
+                            pZapLine->ctor_4CC690(
+                                FP_FromInteger((ourRect.x + ourRect.w) / 2),
+                                FP_FromInteger((ourRect.y + ourRect.h) / 2),
+                                FP_FromInteger((objRect.x + objRect.w) / 2),
+                                FP_FromInteger((objRect.y + objRect.h) / 2),
+                                0, ZapLineType::eThin_1,
+                                Layer::eLayer_ZapLinesMuds_28);
+                        }
+                        zap_line_id = pZapLine->field_8_object_id;
+                    }
+
+                    bElectrocute = CanElectrocute(pObj);
+                    if (bElectrocute)
+                    {
+                        auto pElectrocute = ae_new<Electrocute>();
+                        if (pElectrocute)
+                        {
+                            pElectrocute->ctor_4E5E80(pObj, 0, 1);
+                        }
+                        timerSfx = sGnFrame_5C1B84 + 3;
+
+                        if (pObj->Type() == AETypes::eGlukkon_67)
+                        {
+                            pObj->VTakeDamage_408730(this);
+                        }
+                    }
+
+                    auto pFlicker1 = ae_new<PossessionFlicker>();
+                    if (pFlicker1)
+                    {
+                        pFlicker1->ctor_4319E0(pObj, 8, 255, 255, 255);
+                    }
+
+                    AbilityRing::Factory_482F80(
+                        FP_FromInteger((objRect.x + objRect.w) / 2),
+                        FP_FromInteger((objRect.y + objRect.h) / 2),
+                        RingTypes::eShrykull_Pulse_Large_5, pObj->field_CC_sprite_scale);
+
+                    auto pFlicker2 = ae_new<PossessionFlicker>();
+                    if (pFlicker2)
+                    {
+                        pFlicker2->ctor_4319E0(this, 8, 255, 255, 255);
+                    }
+
+                    AbilityRing::Factory_482F80(
+                        FP_FromInteger((ourRect.x + ourRect.w) / 2),
+                        FP_FromInteger((ourRect.y + ourRect.h) / 2),
+                        RingTypes::eShrykull_Pulse_Large_5, field_CC_sprite_scale);
+
+                    pObj->field_114_flags.Set(Flags_114::e114_Bit5_ZappedByShrykull);
+
+                    SFX_Play_46FBA0(SoundEffect::ShrykullZap_18, 100, 2000);
+                    SFX_Play_46FA90(SoundEffect::Zap1_49, 0);
+
+                    field_120_state = GrenadeStates::eKillTargets_10;
+                    timerDamage = sGnFrame_5C1B84 + 12;
+                    return;
+                }
             }
+
+            if (pExistingZapLine)
+            {
+                pExistingZapLine->field_6_flags.Set(BaseGameObject::eDead_Bit3);
+                zap_line_id = -1;
+            }
+            field_20_animation.field_4_flags.Clear(AnimFlags::eBit3_Render);
+            field_120_state = GrenadeStates::eExploded_7;
             break;
 
         case GrenadeStates::eExploded_7:
             field_6_flags.Set(BaseGameObject::eDead_Bit3);
+            break;
+
+        case GrenadeStates::eKillTargets_10:
+            if (field_20_animation.field_92_current_frame == 0)
+            {
+                if (Math_NextRandom() >= 128u)
+                {
+                    SFX_Play_46FBA0(SoundEffect::Shrykull2_86, 127, 0);
+                }
+                else
+                {
+                    SFX_Play_46FBA0(SoundEffect::Shrykull1_85, 127, 0);
+                }
+            }
+
+            if (pExistingBeingZappedObj)
+            {
+                if (pExistingBeingZappedObj->field_6_flags.Get(BaseGameObject::eDead_Bit3))
+                {
+                    obj_being_zapped_id = -1;
+                }
+                else
+                {
+                    PSX_RECT zapRect = {};
+                    pExistingBeingZappedObj->vGetBoundingRect_424FD0(&zapRect, 1);
+
+                    PSX_RECT ourRect = {};
+                    vGetBoundingRect_424FD0(&ourRect, 1);
+
+                    if (static_cast<s32>(sGnFrame_5C1B84) == timerSfx)
+                    {
+                        auto pParticleBurst = ae_new<ParticleBurst>();
+                        if (pParticleBurst)
+                        {
+                            pParticleBurst->ctor_41CF50(
+                                FP_FromInteger((zapRect.x + zapRect.w) / 2),
+                                FP_FromInteger((zapRect.y + zapRect.h) / 2),
+                                20, field_CC_sprite_scale, BurstType::eBigPurpleSparks_2, 13);
+                        }
+
+                        auto pFlash = ae_new<Flash>();
+                        if (pFlash)
+                        {
+                            pFlash->ctor_428570(Layer::eLayer_Above_FG1_39, 255u, 255u, 255u, 1, TPageAbr::eBlend_3, 1);
+                        }
+                    }
+                    pExistingZapLine->CalculateSourceAndDestinationPositions_4CCAD0(
+                        FP_FromInteger((ourRect.x + ourRect.w) / 2),
+                        FP_FromInteger((ourRect.y + ourRect.h) / 2),
+                        FP_FromInteger((zapRect.x + zapRect.w) / 2),
+                        FP_FromInteger((zapRect.y + zapRect.h) / 2));
+                }
+            }
+
+            if (static_cast<s32>(sGnFrame_5C1B84) > timerDamage)
+            {
+                field_120_state = GrenadeStates::eWaitForExplodeEnd_6;
+                if (pExistingBeingZappedObj)
+                {
+                    if (!bElectrocute)
+                    {
+                        pExistingBeingZappedObj->VTakeDamage_408730(this);
+                    }
+                    obj_being_zapped_id = -1;
+                }
+            }
             break;
 
         case GrenadeStates::eDoesNothing_8:

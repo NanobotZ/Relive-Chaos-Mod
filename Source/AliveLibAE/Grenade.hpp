@@ -14,6 +14,7 @@ enum class GrenadeStates : s16
     eExploded_7 = 7,
     eDoesNothing_8 = 8,
     eFallingBlowUpOnGround_9 = 9,
+    eKillTargets_10 = 10,
 };
 
 struct Grenade_SaveState final
@@ -51,7 +52,7 @@ struct Grenade_SaveState final
     FP field_34_xpos;
     FP field_38_ypos;
 };
-ALIVE_ASSERT_SIZEOF_ALWAYS(Grenade_SaveState, 0x3C);
+//ALIVE_ASSERT_SIZEOF_ALWAYS(Grenade_SaveState, 0x3C);
 
 class Grenade final : public BaseThrowable
 {
@@ -120,6 +121,10 @@ private:
     EXPORT s16 OnCollision_InstantExplode_4490D0(BaseGameObject* pHit);
 
 
+    EXPORT s16 CanElectrocute(BaseGameObject* pObj);
+
+    EXPORT s16 CanKill(BaseAnimatedWithPhysicsGameObject* pObj);
+
     /*
     Grenade__vOnTrapDoorOpen_449390
     Grenade__vThrow_4482E0
@@ -143,5 +148,10 @@ private:
     s16 field_134_bExplodeNow;
     s16 field_136_padding;
     BaseGameObject* field_138_pOwner;
+    s32 zap_line_id;
+    s32 obj_being_zapped_id;
+    s16 bElectrocute;
+    s32 timerDamage;
+    s32 timerSfx;
 };
-ALIVE_ASSERT_SIZEOF(Grenade, 0x13C);
+//ALIVE_ASSERT_SIZEOF(Grenade, 0x13C);
