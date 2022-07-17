@@ -4,6 +4,6 @@ This is a Chaos Mod based on R.E.L.I.V.E. (more info here https://github.com/Ali
 Most of the effect's logic is done here.
 
 # Managed library
-Effects definition, Config App, Vote processing, Twitch Chat connection and Twitch Overlay are done in a managed (.NET) part of the project located here:
+Effect definitions, Config App, Vote processing, Twitch Chat connection and Twitch Overlay are done in a managed (.NET) part of the project located here:
 
 https://github.com/NanobotZ/Relive-Chaos-Mod-Managed
