@@ -8,7 +8,9 @@
 #include "Collisions.hpp"
 #include "stdlib.hpp"
 #include "PlatformBase.hpp"
+#include "Abe.hpp"
 #include "Game.hpp"
+#include "ChaosModHelpers.hpp"
 
 ALIVE_VAR(1, 0x5c1bde, u16, gInfiniteGrenades_5C1BDE, 0);
 
@@ -43,7 +45,9 @@ const AETypes throwable_types_55FAFC[252] = {
 
 EXPORT BaseThrowable* CCSTD Make_Throwable_49AF30(FP xpos, FP ypos, s16 count)
 {
-    switch (throwable_types_55FAFC[gMap_5C3030.field_22_overlayID])
+    auto throwableType = sActiveHero_5C1B68->field_throwableType == AETypes::eNone_0 ? throwable_types_55FAFC[gMap_5C3030.field_22_overlayID] : sActiveHero_5C1B68->field_throwableType;
+    ChaosModHelpers::LoadThrowableResources(throwableType);
+    switch (throwableType)
     {
         case AETypes::eBone_11:
             return ae_new<Bone>()->ctor_4112C0(xpos, ypos, count);

@@ -270,8 +270,11 @@ public:
     DynamicArrayT<u8*> field_10_resources_array;
 private:
     s32 field_1C_update_delay;
+
+public:
+    bool createdByChaosMod;
 };
-ALIVE_ASSERT_SIZEOF(BaseGameObject, 0x20);
+ALIVE_ASSERT_SIZEOF(BaseGameObject, 0x20 + sizeof(bool));
 
 
 ALIVE_VAR_EXTERN(DynamicArrayT<BaseGameObject>*, gBaseGameObject_list_BB47C4);

@@ -28,6 +28,7 @@
 #include "Lever.hpp"
 #include "Sys_common.hpp"
 #include "Grid.hpp"
+#include "ChaosMod.hpp"
 
 ALIVE_ARY(1, 0x5523A0, TFlyingSligBrainFn, 26, sFlyingSlig_motion_table_5523A0,
           {
@@ -1053,6 +1054,10 @@ s16 FlyingSlig::vTakeDamage_434C90(BaseGameObject* pFrom)
             if (!pExplosion)
             {
                 return 1;
+            }
+            if (chaosMod.getActiveEffect() == ChaosEffect::OnePunchAbe)
+            {
+                pExplosion->dontDoDamageToAbe = true;
             }
             pExplosion->ctor_4A1200(field_B8_xpos, field_BC_ypos - (field_CC_sprite_scale * FP_FromInteger(5)), field_CC_sprite_scale, 1);
             return 1;

@@ -55,10 +55,10 @@ EXPORT void CC PSX_Calc_FrameSkip_4945D0()
 
 struct TextRecords final
 {
-    char_type field_0_src_txt[1024];
-    char_type field_400_dst_txt[1027];
+    char_type field_0_src_txt[2048];
+    char_type field_400_dst_txt[2051];
 };
-ALIVE_ASSERT_SIZEOF(TextRecords, 0x803);
+ALIVE_ASSERT_SIZEOF(TextRecords, 4099);
 
 struct DebugTexts final
 {
@@ -114,9 +114,9 @@ EXPORT s32 CC DebugFont_Open_4F8AB0(u8 xMargin, u8 yMargin, u8 displayWidth, u8 
     sTexts_C27640[idx].field_9_text.field_400_dst_txt[0] = 0;
 
     s32 limitedMaxLen = maxLenChars;
-    if (maxLenChars > 1023)
+    if (maxLenChars > 2047)
     {
-        limitedMaxLen = 1023;
+        limitedMaxLen = 2047;
     }
     sTexts_C27640[idx].field_4_max_len = limitedMaxLen;
     return idx;
@@ -131,7 +131,7 @@ EXPORT s32 CC DebugFont_Init_4DCF40() // Font
         sbDebugFontLoaded_BB4A24 = 1;
     }
     DebugFont_Reset_4F8B40();
-    sDebugTextIdx_BB47C8 = DebugFont_Open_4F8AB0(8, 16, static_cast<u8>(gPsxDisplay_5C1130.field_0_width), 200, 0, 600u);
+    sDebugTextIdx_BB47C8 = DebugFont_Open_4F8AB0(8, 16, static_cast<u8>(gPsxDisplay_5C1130.field_0_width), 200, 0, 2040);
     //nullsub_7(sTextIdx_BB47C8);
     sDebugFontTmpBuffer_BB47CC[0] = 0;
     return 0;

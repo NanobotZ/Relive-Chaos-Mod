@@ -11,6 +11,7 @@
 #include "Particle.hpp"
 #include "Grid.hpp"
 #include <assert.h>
+#include "ChaosMod.hpp"
 
 Rock* Rock::ctor_49E150(FP xpos, FP ypos, s16 count)
 {
@@ -238,8 +239,16 @@ void Rock::InTheAir_49E4B0()
                 else
                 {
                     field_BC_ypos = hitY;
-                    field_C4_velx = (field_C4_velx / FP_FromInteger(2));
-                    field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+                    if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+                    {
+                        field_C8_vely = -field_C8_vely;
+                        chaosMod.markEffectAsUsed();
+                    }
+                    else
+                    {
+                        field_C4_velx = (field_C4_velx / FP_FromInteger(2));
+                        field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+                    }
 
                     s16 vol = 20 * (4 - field_11E_volume);
                     if (vol < 40)
@@ -259,7 +268,16 @@ void Rock::InTheAir_49E4B0()
                 if (field_C8_vely < FP_FromInteger(0))
                 {
                     field_BC_ypos = hitY;
-                    field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+                    if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+                    {
+                        field_C8_vely = -field_C8_vely;
+                        chaosMod.markEffectAsUsed();
+                    }
+                    else
+                    {
+                        field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+                    }
+
                     s16 vol = 20 * (4 - field_11E_volume);
                     if (vol < 40)
                     {
@@ -299,7 +317,16 @@ void Rock::InTheAir_49E4B0()
 //TODO Identical to AO - merge
 void Rock::BounceHorizontally( FP hitX, FP hitY )
 {
-    field_C4_velx = (-field_C4_velx / FP_FromInteger(2));
+    if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+    {
+        field_C4_velx = -field_C4_velx;
+        chaosMod.markEffectAsUsed();
+    }
+    else
+    {
+        field_C4_velx = (-field_C4_velx / FP_FromInteger(2));
+    }
+
     field_B8_xpos = hitX;
     field_BC_ypos = hitY;
     s16 vol = 20 * (4 - field_11E_volume);
@@ -326,12 +353,28 @@ s16 Rock::OnCollision_49EF10(BaseAliveGameObject* pObj)
     if (field_120_xpos < FP_FromInteger(bRect.x) || field_120_xpos > FP_FromInteger(bRect.w))
     {
         field_B8_xpos -= field_C4_velx;
-        field_C4_velx = (-field_C4_velx / FP_FromInteger(2));
+        if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+        {
+            field_C4_velx = -field_C4_velx;
+            chaosMod.markEffectAsUsed();
+        }
+        else
+        {
+            field_C4_velx = (-field_C4_velx / FP_FromInteger(2));
+        }
     }
     else
     {
         field_BC_ypos -= field_C8_vely;
-        field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+        if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+        {
+            field_C8_vely = -field_C8_vely;
+            chaosMod.markEffectAsUsed();
+        }
+        else
+        {
+            field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+        }
     }
 
     pObj->VOnThrowableHit(this);

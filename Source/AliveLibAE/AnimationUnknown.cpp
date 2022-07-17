@@ -4,6 +4,7 @@
 #include "PsxDisplay.hpp"
 #include "stdlib.hpp"
 #include "Sys_common.hpp"
+#include "ChaosMod.hpp"
 
 void AnimationUnknown::vDecode_40AC90()
 {
@@ -56,14 +57,20 @@ void AnimationUnknown::vRender_40C690(s32 xpos, s32 ypos, PrimHeader** ppOt, s32
             frameW = FP_GetExponent((FP_FromInteger(frameW) * field_6C_scale));
         }
 
+        auto chaosEffect = chaosMod.getActiveEffect();
+        if (chaosEffect == ChaosEffect::HorizontalDinnerbone || chaosEffect == ChaosEffect::Dinnerbone || chaosEffect == ChaosEffect::Disco)
+        {
+            chaosMod.markEffectAsUsed();
+        }
+
         s32 polyX = 0;
         s32 polyY = 0;
         s32 xConverted = PsxToPCX(xpos);
         if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit7_SwapXY))
         {
-            if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit6_FlipY))
+            if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit6_FlipY) != (chaosEffect == ChaosEffect::Dinnerbone))
             {
-                if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX))
+                if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
                 {
                     polyX = xConverted - frameOffY - frameH;
                 }
@@ -75,7 +82,7 @@ void AnimationUnknown::vRender_40C690(s32 xpos, s32 ypos, PrimHeader** ppOt, s32
             }
             else
             {
-                if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX))
+                if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
                 {
                     polyX = xConverted - frameOffY - frameH;
                 }
@@ -86,9 +93,9 @@ void AnimationUnknown::vRender_40C690(s32 xpos, s32 ypos, PrimHeader** ppOt, s32
                 polyY = ypos - frameOffX - frameW;
             }
         }
-        else if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit6_FlipY))
+        else if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit6_FlipY) != (chaosEffect == ChaosEffect::Dinnerbone))
         {
-            if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX))
+            if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
             {
                 polyX = xConverted - frameOffX - frameW;
             }
@@ -100,7 +107,7 @@ void AnimationUnknown::vRender_40C690(s32 xpos, s32 ypos, PrimHeader** ppOt, s32
         }
         else
         {
-            if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX))
+            if (field_68_anim_ptr->field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
             {
                 polyX = xConverted - frameOffX - frameW;
             }
@@ -113,7 +120,14 @@ void AnimationUnknown::vRender_40C690(s32 xpos, s32 ypos, PrimHeader** ppOt, s32
 
         if (!field_4_flags.Get(AnimFlags::eBit16_bBlending))
         {
-            SetRGB0(pPoly, field_8_r, field_9_g, field_A_b);
+            if (chaosEffect == ChaosEffect::Disco)
+            {
+                SetRGB0(pPoly, Math_NextRandom(), Math_NextRandom(), Math_NextRandom());
+            }
+            else
+            {
+                SetRGB0(pPoly, field_8_r, field_9_g, field_A_b);
+            }
         }
 
         SetXYWH(pPoly,

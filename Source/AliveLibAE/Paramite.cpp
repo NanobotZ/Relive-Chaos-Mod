@@ -5458,6 +5458,7 @@ s16 Paramite::vTakeDamage_488250(BaseGameObject* pFrom)
         case AETypes::eDrill_30:
         case AETypes::eBaseBomb_46:
         case AETypes::eExplosion_109:
+        case AETypes::eAbe_69:
         {
             Event_Broadcast_422BC0(kEventMudokonComfort | kEventSpeaking, this);
             auto pGibs = ae_new<Gibs>();

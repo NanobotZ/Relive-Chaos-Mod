@@ -256,6 +256,9 @@ void Explosion::DealBlastDamage_4A1BD0(PSX_RECT* pRect)
 
         if (pObj->field_6_flags.Get(BaseGameObject::eIsBaseAliveGameObject_Bit6))
         {
+            if (dontDoDamageToAbe && pObj->Type() == AETypes::eAbe_69)
+                continue;
+
             PSX_RECT boundRect = {};
             pObj->vGetBoundingRect_424FD0(&boundRect, 1);
 

@@ -1253,6 +1253,7 @@ const u8 sBitmapFont[] = {
 EXPORT void CC BMP_Draw_String_4F2230(Bitmap* pBmp, s32 x, s32 y, u32 /*fgColour*/, s32 /*bgColour*/, LPCSTR lpString)
 {
     SDL_Surface* pFontBmp = SDL_LoadBMP_RW(SDL_RWFromConstMem(sBitmapFont, sizeof(sBitmapFont)), SDL_TRUE);
+    SDL_SetColorKey(pFontBmp, SDL_TRUE, SDL_MapRGB(pFontBmp->format, 0, 0, 0));
 
     s32 xpos = 0;
     const s32 kLetterWidth = 8;
@@ -1267,7 +1268,7 @@ EXPORT void CC BMP_Draw_String_4F2230(Bitmap* pBmp, s32 x, s32 y, u32 /*fgColour
         if (letter == ' ')
         {
             xpos += kLetterWidth;
-            SDL_FillRect(pBmp->field_0_pSurface, &dstRect, 0x0000);
+            // SDL_FillRect(pBmp->field_0_pSurface, &dstRect, 0x0000); // disabled because I've decided to use transparency
             continue;
         }
 
@@ -1276,7 +1277,7 @@ EXPORT void CC BMP_Draw_String_4F2230(Bitmap* pBmp, s32 x, s32 y, u32 /*fgColour
         {
             continue;
         }
-        else if (letter >= 'z')
+        else if (letter > 'z')
         {
             continue;
         }

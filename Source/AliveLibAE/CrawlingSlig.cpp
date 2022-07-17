@@ -675,6 +675,7 @@ s16 CrawlingSlig::vTakeDamage_4192B0(BaseGameObject* pFrom)
             case AETypes::eMineCar_89:
             case AETypes::eNeverSet_107:
             case AETypes::eExplosion_109:
+            case AETypes::eAbe_69:
                 if (!BrainIs(&CrawlingSlig::Brain_4_GetKilled_41A880))
                 {
                     SetBrain(&CrawlingSlig::Brain_4_GetKilled_41A880);

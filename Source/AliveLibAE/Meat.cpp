@@ -13,6 +13,7 @@
 #include "Abe.hpp"
 #include "Particle.hpp"
 #include "Grid.hpp"
+#include "ChaosMod.hpp"
 
 Meat* Meat::ctor_4694A0(FP xpos, FP ypos, s16 count)
 {
@@ -225,9 +226,19 @@ void Meat::InTheAir_4697E0()
                 {
                     field_B8_xpos = FP_FromInteger(SnapToXGrid_449930(field_CC_sprite_scale, FP_GetExponent(hitX)));
                     field_BC_ypos = hitY;
-                    field_11C_state = MeatStates::eBecomeAPickUp_3;
-                    field_C8_vely = FP_FromInteger(0);
-                    field_C4_velx = FP_FromInteger(0);
+
+                    if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+                    {
+                        field_C8_vely = -field_C8_vely;
+                        chaosMod.markEffectAsUsed();
+                    }
+                    else
+                    {
+                        field_11C_state = MeatStates::eBecomeAPickUp_3;
+                        field_C8_vely = FP_FromInteger(0);
+                        field_C4_velx = FP_FromInteger(0);
+                    }
+
                     SFX_Play_46FBA0(SoundEffect::MeatBounce_36, 0, -650);
                     Event_Broadcast_422BC0(kEventNoise, this);
                     Event_Broadcast_422BC0(kEventSuspiciousNoise, this);
@@ -241,7 +252,17 @@ void Meat::InTheAir_4697E0()
                 {
                     field_B8_xpos = hitX;
                     field_BC_ypos = hitY;
-                    field_C4_velx = (-field_C4_velx / FP_FromInteger(4));
+
+                    if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+                    {
+                        field_C4_velx = -field_C4_velx;
+                        chaosMod.markEffectAsUsed();
+                    }
+                    else
+                    {
+                        field_C4_velx = (-field_C4_velx / FP_FromInteger(4));
+                    }
+
                     SFX_Play_46FBA0(SoundEffect::MeatBounce_36, 0, -650);
                     Event_Broadcast_422BC0(kEventNoise, this);
                     Event_Broadcast_422BC0(kEventSuspiciousNoise, this);
@@ -259,7 +280,17 @@ void Meat::InTheAir_4697E0()
                 {
                     field_B8_xpos = hitX;
                     field_BC_ypos = hitY;
-                    field_C4_velx = (-field_C4_velx / FP_FromInteger(4));
+
+                    if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+                    {
+                        field_C4_velx = -field_C4_velx;
+                        chaosMod.markEffectAsUsed();
+                    }
+                    else
+                    {
+                        field_C4_velx = (-field_C4_velx / FP_FromInteger(4));
+                    }
+
                     SFX_Play_46FBA0(SoundEffect::MeatBounce_36, 0, -650);
                     Event_Broadcast_422BC0(kEventNoise, this);
                     Event_Broadcast_422BC0(kEventSuspiciousNoise, this);
@@ -277,7 +308,15 @@ void Meat::InTheAir_4697E0()
                 {
                     field_B8_xpos = hitX;
                     field_BC_ypos = hitY + FP_FromInteger(1);
-                    field_C8_vely = FP_FromInteger(0);
+                    if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+                    {
+                        field_C8_vely = -field_C8_vely;
+                        chaosMod.markEffectAsUsed();
+                    }
+                    else
+                    {
+                        field_C8_vely = FP_FromInteger(0);
+                    }
                     SFX_Play_46FBA0(SoundEffect::MeatBounce_36, 0, -650);
                     Event_Broadcast_422BC0(kEventNoise, this);
                     Event_Broadcast_422BC0(kEventSuspiciousNoise, this);
@@ -307,12 +346,28 @@ s16 Meat::OnCollision_469FF0(BaseGameObject* pHit)
     if (field_120_xpos < FP_FromInteger(bRect.x) || field_120_xpos > FP_FromInteger(bRect.w))
     {
         field_B8_xpos -= field_C4_velx;
-        field_C4_velx = (-field_C4_velx / FP_FromInteger(2));
+        if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+        {
+            field_C4_velx = -field_C4_velx;
+            chaosMod.markEffectAsUsed();
+        }
+        else
+        {
+            field_C4_velx = (-field_C4_velx / FP_FromInteger(2));
+        }
     }
     else
     {
         field_BC_ypos -= field_C8_vely;
-        field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+        if (chaosMod.getActiveEffect() == ChaosEffect::BouncyThrowables)
+        {
+            field_C8_vely = -field_C8_vely;
+            chaosMod.markEffectAsUsed();
+        }
+        else
+        {
+            field_C8_vely = (-field_C8_vely / FP_FromInteger(2));
+        }
     }
 
     static_cast<BaseAliveGameObject*>(pHit)->VOnThrowableHit(this);

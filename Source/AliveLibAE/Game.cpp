@@ -42,6 +42,7 @@
 #include "PathDataExtensions.hpp"
 #include "GameAutoPlayer.hpp"
 #include <string>
+#include "ChaosMod.hpp"
 
 void Game_ForceLink()
 { }
@@ -261,6 +262,7 @@ EXPORT s32 CC Game_End_Frame_4950F0(u32 flags)
 
     if (Sys_PumpMessages_4EE4F4())
     {
+        chaosMod.close();
         bQuitting_BD0F08 = 1;
         exit(0);
     }
@@ -431,6 +433,7 @@ EXPORT void CC SYS_EventsPump_494580()
 {
     if (Sys_PumpMessages_4EE4F4())
     {
+        chaosMod.close();
         bQuitting_BD0F08 = 1;
         exit(0);
     }
@@ -720,8 +723,13 @@ EXPORT void CC Game_Main_4949F0()
     Sys_SetWindowProc_Filter_4EE197(Sys_WindowMessageHandler_494A40);
     #endif
 #endif
+
+    chaosMod.init();
+
     // Only returns once the engine is shutting down
     Game_Run_466D40();
+
+    chaosMod.close();
 
     if (sGame_OnExitCallback_BBFB00)
     {
@@ -739,6 +747,12 @@ EXPORT void CC Game_Loop_467230()
     bool bPauseMenuObjectFound = false;
     while (!gBaseGameObject_list_BB47C4->IsEmpty())
     {
+        if (Input().isPressed(sInputKey_GameSpeak8_555110) && Input().isHeld(sInputKey_GameSpeak8_555110))
+        {
+            chaosMod.skipCurrentEffect();
+        }
+        chaosMod.update();
+
         Events_Reset_Active_422DA0();
         Slurg::Clear_Slurg_Step_Watch_Points_449A90();
         bSkipGameObjectUpdates_5C2FA0 = 0;
@@ -827,6 +841,7 @@ EXPORT void CC Game_Loop_467230()
             }
         }
 
+        chaosMod.printInfo();
         DebugFont_Flush_4DD050();
         PSX_DrawSync_4F6280(0);
         pScreenManager_5BB5F4->VRender(ppOtBuffer);

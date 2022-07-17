@@ -346,6 +346,7 @@ s16 UXB::vTakeDamage_4DF850(BaseGameObject* pFrom)
         case AETypes::eAbilityRing_104:
         case AETypes::eExplosion_109:
         case AETypes::eShrykull_121:
+        case AETypes::eGrenade_65:
             break;
 
         default:
@@ -472,7 +473,14 @@ void UXB::Update_4DF030()
                 }
 
                 field_118_state = UXBState::eDelay_0;
-                field_124_next_state_frame = sGnFrame_5C1B84 + 10; // UXB change color delay.
+                if (createdByChaosMod)
+                {
+                    field_124_next_state_frame = sGnFrame_5C1B84 + 7;
+                }
+                else
+                {
+                    field_124_next_state_frame = sGnFrame_5C1B84 + 10; // UXB change color delay.
+                }
             }
             break;
 

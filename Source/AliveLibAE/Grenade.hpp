@@ -148,10 +148,10 @@ private:
     s16 field_134_bExplodeNow;
     s16 field_136_padding;
     BaseGameObject* field_138_pOwner;
-    s32 zap_line_id;
-    s32 obj_being_zapped_id;
-    s16 bElectrocute;
-    s32 timerDamage;
-    s32 timerSfx;
+    s32 field_zap_line_id;
+    s32 field_obj_being_zapped_id;
+    s16 field_bElectrocute;
+    s32 field_timerDamage;
+    s32 field_timerSfx;
 };
 //ALIVE_ASSERT_SIZEOF(Grenade, 0x13C);

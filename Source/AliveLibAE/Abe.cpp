@@ -55,6 +55,11 @@
 #include "TestAnimation.hpp"
 #include "Sys_common.hpp"
 #include "Grid.hpp"
+#include "Sound/Sound.hpp"
+#include "Grenade.hpp"
+#include "ChaosMod.hpp"
+#include "ChaosModHelpers.hpp"
+#include "PauseMenu.hpp"
 
 using TAbeMotionFunction = decltype(&Abe::Motion_0_Idle_44EEB0);
 
@@ -427,6 +432,48 @@ EXPORT s32 CC Environment_SFX_457A40(EnvironmentSfx sfxId, s32 volume, s32 pitch
 
     switch (sfxId)
     {
+        case EnvironmentSfx::eWalkingFootstep_1:
+        case EnvironmentSfx::eRunningFootstep_2:
+        case EnvironmentSfx::eSneakFootstep_3:
+        case EnvironmentSfx::eRunSlide_4:
+        case EnvironmentSfx::eLandingSoft_5:
+        case EnvironmentSfx::eHitGroundSoft_6:
+        case EnvironmentSfx::eRollingNoise_8:
+        case EnvironmentSfx::eGenericMovement_9:
+        case EnvironmentSfx::eRunJumpOrLedgeHoist_11:
+        case EnvironmentSfx::eKnockback_13:
+        case EnvironmentSfx::eElumHitWall_14:
+            if (chaosMod.getActiveEffect() == ChaosEffect::FatAbe)
+            {
+                for (s32 i = 0; i < gBaseGameObject_list_BB47C4->Size(); i++)
+                {
+                    BaseGameObject* pObj = gBaseGameObject_list_BB47C4->ItemAt(i);
+                    if (!pObj)
+                    {
+                        break;
+                    }
+
+                    if (pObj->Type() == AETypes::eScreenShake_118)
+                    {
+                        pObj->field_6_flags.Set(BaseGameObject::Options::eDead_Bit3);
+                    }
+                }
+
+                auto pScreenShake = ae_new<ScreenShake>();
+                if (pScreenShake)
+                {
+                    pScreenShake->ctor_4ACF70(FALSE, TRUE);
+                }
+
+                chaosMod.markEffectAsUsed();
+            }
+            break;
+        default:
+            break;
+    }
+
+    switch (sfxId)
+    {
         case EnvironmentSfx::eSlideStop_0:
             sndIndex = 11;
             sndVolume = 40;
@@ -654,6 +701,13 @@ s32 CC Animation_OnFrame_Abe_455F80(void* pPtr, s16* pData)
     {
         xOff = hitX - pAbe->field_B8_xpos;
         tableX = -tableX;
+    }
+
+    if (chaosMod.getActiveEffect() == ChaosEffect::ThrowBackwards)
+    {
+        // xOff = -xOff;
+        tableX = -tableX;
+        chaosMod.markEffectAsUsed();
     }
 
     if (pThrowable)
@@ -885,8 +939,10 @@ Abe* Abe::ctor_44AD10(s32 /*frameTableOffset*/, s32 /*r*/, s32 /*g*/, s32 /*b*/)
 
 
     // Animation test code
-    //auto testAnim = ae_new<TestAnimation>(); testAnim->ctor();
+    // auto testAnim = ae_new<TestAnimation>(); testAnim->ctor();
 
+
+    field_throwableType = AETypes::eNone_0;
 
     return this;
 }
@@ -1082,7 +1138,7 @@ s32 CC Abe::CreateFromSaveState_44D4F0(const u8* pData)
     }
 
     sActiveHero_5C1B68->field_20_animation.Set_Animation_Data_409C80(animRec.mFrameTableOffset, animFromState);
-    //sActiveHero_5C1B68->field_20_animation.Set_Animation_Data_409C80(sAbeFrameTables[sActiveHero_5C1B68->field_106_current_motion], animFromState);
+    // sActiveHero_5C1B68->field_20_animation.Set_Animation_Data_409C80(sAbeFrameTables[sActiveHero_5C1B68->field_106_current_motion], animFromState);
 
     sActiveHero_5C1B68->field_20_animation.field_92_current_frame = pSaveState->anim_current_frame;
     sActiveHero_5C1B68->field_20_animation.field_E_frame_change_counter = pSaveState->anim_frame_change_counter;
@@ -1246,6 +1302,8 @@ s32 CC Abe::CreateFromSaveState_44D4F0(const u8* pData)
         }
     }
 
+    sActiveHero_5C1B68->field_114_flags.Clear(Flags_114::e114_Bit5_ZappedByShrykull);
+
     return sizeof(Abe_SaveState);
 }
 
@@ -1329,6 +1387,212 @@ ALIVE_VAR(1, 0x5c1bda, s16, gAbeBulletProof_5C1BDA, 0);
 
 void Abe::Update_449DC0()
 {
+    auto activeEffect = chaosMod.getActiveEffect();
+    if (field_10C_health > FP_FromInteger(0) && (activeEffect == ChaosEffect::AbeSuicide || activeEffect == ChaosEffect::FakeAbeSuicide))
+    {
+        if (!ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, AEResourceID::kAbeblowResID, 0, 0))
+        {
+            ResourceManager::LoadResourceFile_49C170("ABEBLOW.BAN", nullptr);
+        }
+
+        if (activeEffect == ChaosEffect::AbeSuicide)
+        {
+            if (sControlledCharacter_5C1B8C != this)
+            {
+                GiveControlBackToMe_44BA10();
+            }
+
+            ChaosModHelpers::KillSpawnedAliveObjects();
+            field_10C_health = FP_FromInteger(0);
+            field_114_flags.Set(Flags_114::e114_MotionChanged_Bit2);
+            ToKnockback_44E700(1, 1);
+        }
+        else
+        {
+            // TODO CHAOS spawn light effects
+        }
+
+        Environment_SFX_457A40(EnvironmentSfx::eDeathNoise_7, 0, 32767, this);
+
+        // field_D4_b = 30; // what are those for anyway
+        // field_D2_g = 30;
+        // field_D0_r = 30;
+
+        auto pGibs = ae_new<Gibs>();
+        pGibs->ctor_40FB40(
+            GibType::Abe_0,
+            field_B8_xpos,
+            field_BC_ypos,
+            FP_FromInteger(0),
+            FP_FromInteger(0),
+            field_CC_sprite_scale,
+            0);
+
+        auto pMoreGibs = ae_new<Gibs>();
+        pMoreGibs->ctor_40FB40(
+            GibType::Abe_0,
+            field_B8_xpos,
+            field_BC_ypos,
+            FP_FromInteger(0),
+            FP_FromInteger(0),
+            field_CC_sprite_scale,
+            0);
+
+        field_20_animation.field_4_flags.Clear(AnimFlags::eBit3_Render);
+
+        chaosMod.markEffectAsUsed();
+        return;
+    }
+
+    if (field_10C_health > FP_FromInteger(0) && chaosMod.getRealActiveEffect() == ChaosEffect::FakeAbeSuicide)
+    {
+        if (!field_20_animation.field_4_flags.Get(AnimFlags::eBit3_Render) && chaosMod.getFullEffectDuration() - chaosMod.getEffectDuration() > 5)
+        {
+            field_20_animation.field_4_flags.Set(AnimFlags::eBit3_Render);
+        }
+    }
+
+    if (activeEffect == ChaosEffect::RestartPath)
+    {
+        pPauseMenu_5C9300->RestartPath();
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::AbeInvisible)
+    {
+        auto effectDuration = chaosMod.getEffectDuration();
+        if (field_170_invisible_timer)
+        {
+            field_170_invisible_timer += effectDuration * 30;
+        }
+        else
+        {
+            field_170_invisible_timer = sGnFrame_5C1B84 + (effectDuration * 30);
+        }
+
+        field_174_unused = 0;
+
+        InvisibleEffect* pInvisible = static_cast<InvisibleEffect*>(sObjectIds_5C1B70.Find_449CF0(field_178_invisible_effect_id));
+        if (!pInvisible || pInvisible->field_6_flags.Get(BaseGameObject::eDead_Bit3))
+        {
+            pInvisible = ae_new<InvisibleEffect>();
+            if (pInvisible)
+            {
+                pInvisible->ctor_45F280(this);
+            }
+            field_178_invisible_effect_id = pInvisible->field_8_object_id;
+        }
+        pInvisible->BecomeInvisible_45F9E0();
+
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::AllMudsToAbe)
+    {
+        for (s32 i = 0; i < gBaseAliveGameObjects_5C1B7C->Size(); i++)
+        {
+            BaseAliveGameObject* pObj = gBaseAliveGameObjects_5C1B7C->ItemAt(i);
+            if (!pObj)
+            {
+                break;
+            }
+
+            if (pObj->Type() == AETypes::eMudokon_110 || pObj->Type() == AETypes::eMudokon2_81)
+            {
+                pObj->field_B8_xpos = this->field_B8_xpos;
+                pObj->field_BC_ypos = this->field_BC_ypos - FP_FromInteger(4);
+                pObj->field_106_current_motion = eMudMotions::M_Fall_49_472C60;
+
+                // make sure the teleported muds have the same scale, so they won't just clip through collision lines
+                pObj->field_D6_scale = this->field_D6_scale;
+                pObj->field_CC_sprite_scale = this->field_CC_sprite_scale;
+
+                if (pObj->field_10C_health > FP_FromInteger(0))
+                {
+                    pObj->field_20_animation.field_4_flags.Set(AnimFlags::eBit3_Render);
+                    pObj->field_6_flags.Clear(BaseGameObject::eDead_Bit3);
+                }
+
+                chaosMod.markEffectAsUsed();
+            }
+        }
+    }
+
+    auto activeThrowableEffect = ChaosModHelpers::GetActiveGiveThrowableEffect();
+    if (activeEffect != ChaosEffect::None && activeThrowableEffect != AETypes::eNone_0)
+    {
+        s16 throwablesToAdd = 9 - field_1A2_throwable_count;
+        field_1A2_throwable_count = 9;
+        field_throwableType = activeThrowableEffect;
+
+        ChaosModHelpers::LoadThrowableResources(activeThrowableEffect);
+
+        if (throwablesToAdd)
+        {
+            // LoadRockTypes_49AB30( // TODO this bins in LVLs without nades/rocks/etc
+            //     sActiveQuicksaveData_BAF7F8.field_244_restart_path_world_info.field_4_level,
+            //     sActiveQuicksaveData_BAF7F8.field_244_restart_path_world_info.field_6_path);
+
+            if (!gpThrowableArray_5D1E2C)
+            {
+                gpThrowableArray_5D1E2C = ae_new<ThrowableArray>();
+                gpThrowableArray_5D1E2C->ctor_49A630();
+            }
+
+            gpThrowableArray_5D1E2C->Add_49A7A0(throwablesToAdd, activeThrowableEffect);
+        }
+
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::SpawnSlig)
+    {
+        ChaosModHelpers::SpawnSlig(sControlledCharacter_5C1B8C->field_B8_xpos, sControlledCharacter_5C1B8C->field_BC_ypos, sControlledCharacter_5C1B8C->field_CC_sprite_scale, Path_Slig::StartState::Sleeping_2, 90, XDirection_short::eLeft_0);
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::SpawnSligs)
+    {
+        ChaosModHelpers::SpawnSligs(sControlledCharacter_5C1B8C->field_B8_xpos, sControlledCharacter_5C1B8C->field_BC_ypos, sControlledCharacter_5C1B8C->field_CC_sprite_scale, Path_Slig::StartState::Sleeping_2, 90, static_cast<u8>(Math_RandomRange_496AB0(3, 7)));
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::SpawnSlog)
+    {
+        ChaosModHelpers::SpawnSlog(sControlledCharacter_5C1B8C->field_B8_xpos, sControlledCharacter_5C1B8C->field_BC_ypos, sControlledCharacter_5C1B8C->field_CC_sprite_scale, XDirection_short::eLeft_0, Choice_short::eYes_1);
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::SpawnSlogs)
+    {
+        ChaosModHelpers::SpawnSlogs(sControlledCharacter_5C1B8C->field_B8_xpos, sControlledCharacter_5C1B8C->field_BC_ypos, sControlledCharacter_5C1B8C->field_CC_sprite_scale, Choice_short::eYes_1, static_cast<u8>(Math_RandomRange_496AB0(3, 7)));
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::SpawnUXBs)
+    {
+        ChaosModHelpers::SpawnUXBs(field_B8_xpos, field_BC_ypos, field_CC_sprite_scale, Path_UXB::StartState::eOn_0, 12); // we want the UXB's to spawn on Abe, not on controlled character
+
+        field_114_flags.Set(Flags_114::e114_MotionChanged_Bit2);
+        field_C4_velx = FP_FromInteger(0);
+        field_C8_vely = FP_FromInteger(0);
+        field_106_current_motion = eAbeMotions::Motion_0_Idle_44EEB0;
+        field_108_next_motion = eAbeMotions::Motion_0_Idle_44EEB0;
+        field_100_pCollisionLine = nullptr;
+        MapFollowMe_408D10(1);
+
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (field_10C_health > FP_FromInteger(0) && chaosMod.getRealActiveEffect() == ChaosEffect::SpawnUXBs)
+    {
+        if (sControlledCharacter_5C1B8C == this && chaosMod.getFullEffectDuration() - chaosMod.getEffectDuration() < 2) // lock input for 2 seconds
+        {
+            sInputObject_5BD4E0.field_0_pads[sCurrentControllerIndex_5C1BBE].field_0_pressed = 0;
+        }
+    }
+
+
     if (gAbeBulletProof_5C1BDA) // Some flag to reset HP?
     {
         field_114_flags.Clear(Flags_114::e114_Bit7_Electrocuted);
@@ -1596,7 +1860,7 @@ void Abe::Update_449DC0()
             {
                 const AnimRecord& animRec = AnimRec(sAbeFrameTables[field_106_current_motion]);
                 field_20_animation.Set_Animation_Data_409C80(animRec.mFrameTableOffset, MotionToAnimResource_44AAB0(field_106_current_motion));
-                //field_20_animation.Set_Animation_Data_409C80( sAbeFrameTables[field_106_current_motion], MotionToAnimResource_44AAB0(field_106_current_motion));
+                // field_20_animation.Set_Animation_Data_409C80( sAbeFrameTables[field_106_current_motion], MotionToAnimResource_44AAB0(field_106_current_motion));
 
                 field_128.field_14_rolling_motion_timer = sGnFrame_5C1B84;
 
@@ -1613,7 +1877,7 @@ void Abe::Update_449DC0()
 
             const AnimRecord& animRec = AnimRec(sAbeFrameTables[field_106_current_motion]);
             field_20_animation.Set_Animation_Data_409C80(animRec.mFrameTableOffset, MotionToAnimResource_44AAB0(field_106_current_motion));
-            //field_20_animation.Set_Animation_Data_409C80( sAbeFrameTables[field_106_current_motion], MotionToAnimResource_44AAB0(field_106_current_motion));
+            // field_20_animation.Set_Animation_Data_409C80( sAbeFrameTables[field_106_current_motion], MotionToAnimResource_44AAB0(field_106_current_motion));
 
             field_128.field_14_rolling_motion_timer = sGnFrame_5C1B84;
             field_20_animation.SetFrame_409D50(field_F6_anim_frame);
@@ -1874,6 +2138,7 @@ void Abe::vScreenChanged_44D240()
             }
 
             field_1A2_throwable_count = 0;
+            field_throwableType = AETypes::eNone_0;
 
             if (field_168_ring_pulse_timer > 0 && field_16C_bHaveShrykull)
             {
@@ -2177,6 +2442,12 @@ s32 Abe::vGetSaveState_457110(u8* pSaveBuffer)
 
 s16 Abe::vTakeDamage_44BB50(BaseGameObject* pFrom)
 {
+    if (chaosMod.getActiveEffect() == ChaosEffect::IndestructibleAbe)
+    {
+        chaosMod.markEffectAsUsed();
+        return 0;
+    }
+
     // Stop chant sound music.
     SND_SEQ_Stop_4CAE60(SeqId::MudokonChant1_10);
 
@@ -2341,6 +2612,7 @@ s16 Abe::vTakeDamage_44BB50(BaseGameObject* pFrom)
                 pThrowable->VTimeToExplodeRandom_411490(); // Start count down ?
             }
             field_1A2_throwable_count = 0;
+            field_throwableType = AETypes::eNone_0;
             break;
 
         case AETypes::eRockSpawner_48:
@@ -3679,7 +3951,7 @@ void Abe::Motion_3_Fall_459B60()
                 if (field_1AC_flags.Get(Flags_1AC::e1AC_Bit7_land_softly)
                     || (pSoftLanding && field_10C_health > FP_FromInteger(0))                                   // If we are dead soft landing won't save us
                     || ((field_BC_ypos - field_F8_LastLineYPos) < (field_CC_sprite_scale * FP_FromInteger(180)) // Check we didn't fall far enough to be killed
-                        && (field_10C_health > FP_FromInteger(0) || gAbeBulletProof_5C1BDA)))                   //TODO possibly OG bug: those conditions should probably be grouped the following way: ((A || B || C ) && D)
+                        && (field_10C_health > FP_FromInteger(0) || gAbeBulletProof_5C1BDA)))                   // TODO possibly OG bug: those conditions should probably be grouped the following way: ((A || B || C ) && D)
                 {
                     field_106_current_motion = eAbeMotions::Motion_16_LandSoft_45A360;
                 }
@@ -3933,7 +4205,7 @@ void Abe::Motion_13_HoistBegin_452B20()
 
 void Abe::Motion_14_HoistIdle_452440()
 {
-    //sObjectIds_5C1B70.Find_449CF0(field_15C_pull_rope_id); // NOTE: Return never used
+    // sObjectIds_5C1B70.Find_449CF0(field_15C_pull_rope_id); // NOTE: Return never used
     BaseGameObject* pfield_110_id = sObjectIds_5C1B70.Find_449CF0(field_110_id);
     if (Is_Celling_Above_44E8D0())
     {
@@ -4073,8 +4345,7 @@ void Abe::Motion_14_HoistIdle_452440()
                 field_C8_vely = FP_FromInteger(0);
                 if (pfield_110_id)
                 {
-                    if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 || 
-                        field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
+                    if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 || field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
                     {
                         vOnCollisionWith_424EE0(
                             {FP_GetExponent(field_B8_xpos), FP_GetExponent(field_BC_ypos)},
@@ -4451,7 +4722,7 @@ void Abe::Motion_23_RollLoop_453A90()
     }
 }
 
-//TODO: probably unused?
+// TODO: probably unused?
 void Abe::Motion_24_453D00()
 {
     LOG_WARNING("never expected Motion_24_453D00 (roll loop end) to be called");
@@ -4932,8 +5203,7 @@ void Abe::Motion_31_RunJumpMid_452C10()
 
                 if (!pfield_110_id)
                 {
-                    if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 ||
-                        field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
+                    if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 || field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
                     {
                         vOnCollisionWith_424EE0(
                             {FP_GetExponent(field_B8_xpos), FP_GetExponent(field_BC_ypos)},
@@ -5855,7 +6125,7 @@ void Abe::Motion_57_Dead_4589A0()
             field_100_pCollisionLine = nullptr;
             field_128.field_0_abe_timer = sGnFrame_5C1B84 + 8;
             ++field_124_timer;
-            //dword_5C2C64 = 0; // TODO: Never read ?
+            // dword_5C2C64 = 0; // TODO: Never read ?
             return;
 
         case 5:
@@ -5973,6 +6243,71 @@ void Abe::Motion_62_Punch_454750()
         if (!pSlapTarget)
         {
             pSlapTarget = FindObjectOfType_425180(AETypes::eGlukkon_67, gridSize, field_BC_ypos - kFP5);
+        }
+
+        if (chaosMod.getActiveEffect() == ChaosEffect::OnePunchAbe)
+        {
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eScrab_112, gridSize, field_BC_ypos - kFP5);
+            }
+
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eScrab_112, field_B8_xpos, field_BC_ypos - kFP5);
+            }
+
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eParamite_96, gridSize, field_BC_ypos - kFP5);
+            }
+
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eParamite_96, field_B8_xpos, field_BC_ypos - kFP5);
+            }
+
+            // if (!pSlapTarget)
+            //{
+            //     pSlapTarget = FindObjectOfType_425180(AETypes::eFlyingSlig_54, gridSize, field_BC_ypos - kFP5); // TODO CHAOS fix
+            // }
+
+            // if (!pSlapTarget)
+            //{
+            //     pSlapTarget = FindObjectOfType_425180(AETypes::eFlyingSlig_54, field_B8_xpos, field_BC_ypos - kFP5); // TODO CHAOS fix
+            // }
+
+            // if (!pSlapTarget)
+            //{
+            //     pSlapTarget = FindObjectOfType_425180(AETypes::eFlyingSlig_54, gridSize, field_BC_ypos + kFP5 + kFP5); // TODO CHAOS fix
+            // }
+
+            // if (!pSlapTarget)
+            //{
+            //     pSlapTarget = FindObjectOfType_425180(AETypes::eFlyingSlig_54, field_B8_xpos, field_BC_ypos + kFP5 + kFP5); // TODO CHAOS fix
+            // }
+
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eCrawlingSlig_26, gridSize, field_BC_ypos - kFP5);
+            }
+
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eCrawlingSlig_26, field_B8_xpos, field_BC_ypos - kFP5);
+            }
+
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eGreeter_64, gridSize, field_BC_ypos - kFP5);
+            }
+
+            if (!pSlapTarget)
+            {
+                pSlapTarget = FindObjectOfType_425180(AETypes::eGreeter_64, field_B8_xpos, field_BC_ypos - kFP5);
+            }
+
+            chaosMod.markEffectAsUsed();
         }
 
         if (pSlapTarget)
@@ -6159,8 +6494,7 @@ void Abe::Motion_68_ToOffScreenHoist_454B80()
         field_C8_vely = FP_FromInteger(0);
         if (!pfield_110_id)
         {
-            if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 ||
-                field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
+            if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 || field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
             {
                 vOnCollisionWith_424EE0(
                     {FP_GetExponent(field_B8_xpos), FP_GetExponent(field_BC_ypos)},
@@ -6860,8 +7194,8 @@ void Abe::Motion_86_HandstoneBegin_45BD00()
                     switch_id = pMovieStoneTlv->field_14_trigger_switch_id;
 
                     field_184_fmv_id = pMovieStoneTlv->field_10_movie_number;
-                    field_186_to_camera_id[0] = static_cast<s16>(pMovieStoneTlv->field_12_scale); // TODO: Never used?
-                    field_186_to_camera_id[1] = static_cast<s16>(pMovieStoneTlv->field_14_trigger_switch_id);    // TODO: Never used?
+                    field_186_to_camera_id[0] = static_cast<s16>(pMovieStoneTlv->field_12_scale);             // TODO: Never used?
+                    field_186_to_camera_id[1] = static_cast<s16>(pMovieStoneTlv->field_14_trigger_switch_id); // TODO: Never used?
                 }
 
                 if (field_FC_pPathTLV)
@@ -7893,6 +8227,7 @@ void Abe::Motion_114_DoorEnter_459470()
                 {
                     gpThrowableArray_5D1E2C->Remove_49AA00(field_1A2_throwable_count);
                     field_1A2_throwable_count = 0;
+                    field_throwableType = AETypes::eNone_0;
                 }
             }
 
@@ -8084,7 +8419,8 @@ void Abe::Motion_115_DoorExit_459A40()
                                         FP_GetExponent(field_B8_xpos),
                                         FP_GetExponent(field_BC_ypos),
                                         TlvTypes::Door_5))
-                ->field_40_close_on_exit == Choice_short::eYes_1)
+                ->field_40_close_on_exit
+            == Choice_short::eYes_1)
         {
             // TODO: Ret ignored even in real ??
             FindObjectOfType_425180(
@@ -8821,8 +9157,7 @@ void Abe::MoveForward_44E9A0()
     if (field_100_pCollisionLine && (field_D6_scale != 0 ? 1 : 16) & (1 << field_100_pCollisionLine->field_8_type))
     {
         // Handle trap door collision.
-        if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 ||
-            field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
+        if (field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_32 || field_100_pCollisionLine->field_8_type == eLineTypes::eUnknown_36)
         {
             if (pTrapdoor)
             {
@@ -9207,7 +9542,11 @@ s16 Abe::DoGameSpeak_45AB70(s32 input)
             gridSize = ScaleToGridSize_4498B0(field_CC_sprite_scale);
         }
 
-        if (FindObjectOfType_425180(AETypes::eMudokon_110, field_B8_xpos + gridSize, field_BC_ypos - FP_FromInteger(5)))
+        if (chaosMod.getActiveEffect() == ChaosEffect::OnePunchAbe)
+        {
+            nextMotion = eAbeMotions::Motion_62_Punch_454750;
+        }
+        else if (FindObjectOfType_425180(AETypes::eMudokon_110, field_B8_xpos + gridSize, field_BC_ypos - FP_FromInteger(5)))
         {
             nextMotion = eAbeMotions::Motion_62_Punch_454750;
         }

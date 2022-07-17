@@ -9,6 +9,7 @@
 #include "Psx.hpp"
 #include "Renderer/IRenderer.hpp"
 #include "../AliveLibCommon/CamDecompressor.hpp"
+#include "ChaosMod.hpp"
 
 ALIVE_VAR(1, 0x5BB5F4, ScreenManager*, pScreenManager_5BB5F4, nullptr);
 ALIVE_ARY(1, 0x5b86c8, SprtTPage, 300, sSpriteTPageBuffer_5B86C8, {});
@@ -335,11 +336,27 @@ void ScreenManager::VRender_40E6E0(PrimHeader** ppOt)
     pCurrent_SprtTPage_5BB5DC = nullptr;
     sCurrentYPos_5BB5F0 = -1;
 
+    //bool rainbow = chaosMod.getActiveEffect() == ChaosEffect::Rainbows;
+    //u8 r = 0;
+    //u8 g = 0;
+    //u8 b = 0;
+    //if (rainbow)
+    //{
+    //    r = Math_NextRandom();
+    //    g = Math_NextRandom();
+    //    b = Math_NextRandom();
+    //}
+
     for (s32 i = 0; i < 300; i++)
     {
         SprtTPage* pSpriteTPage = &field_24_screen_sprites[i];
         const s32 spriteX = pSpriteTPage->mSprt.mBase.vert.x;
         const s32 spriteY = pSpriteTPage->mSprt.mBase.vert.y;
+
+        /*if (rainbow)
+        {
+            SetRGB0(&pSpriteTPage->mSprt, r, g, b);
+        }*/
 
         if (IsDirty_40EBC0(7, spriteX, spriteY))
         {

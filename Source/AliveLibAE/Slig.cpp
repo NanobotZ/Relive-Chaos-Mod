@@ -34,6 +34,7 @@
 #include "VRam.hpp"
 #include "Electrocute.hpp"
 #include "Grid.hpp"
+#include "ChaosMod.hpp"
 
 const SfxDefinition kSfxInfoTable_5607E0[17] = {
     {0u, 1u, 58u, 40u, -256, -256},
@@ -5161,6 +5162,9 @@ void Slig::WakeUp_4B93B0()
 
 void Slig::ShouldStillBeAlive_4BBC00()
 {
+    if (createdByChaosMod)
+        return;
+
     if (!field_15C_force_alive_state)
     {
         // Check not falling and not in the current screen
@@ -7109,6 +7113,24 @@ s16 Slig::vTakeDamage_4B2470(BaseGameObject* pFrom)
             if (field_106_current_motion == eSligMotions::M_Knockback_34_4B68A0 || field_106_current_motion == eSligMotions::M_Smash_44_4B6B90 || field_106_current_motion == eSligMotions::M_KnockbackToStand_35_4B6A30)
             {
                 return 1;
+            }
+
+            if (chaosMod.getActiveEffect() == ChaosEffect::OnePunchAbe)
+            {
+                auto pGibs = ae_new<Gibs>();
+                if (pGibs)
+                {
+                    pGibs->ctor_40FB40(GibType::Slig_1, field_B8_xpos, field_BC_ypos, field_C4_velx, field_C8_vely, field_CC_sprite_scale, 0);
+                }
+                field_10C_health = FP_FromInteger(0);
+                SFX_Play_46FA90(SoundEffect::FallingItemHit_47, 90);
+                field_20_animation.field_4_flags.Clear(AnimFlags::eBit2_Animate);
+                field_20_animation.field_4_flags.Clear(AnimFlags::eBit3_Render);
+                SetUpdateDelay(40);
+                SetBrain(&Slig::Brain_ReturnControlToAbeAndDie_1_4BC410);
+                field_106_current_motion = eSligMotions::M_StandIdle_0_4B4EC0;
+                vUpdateAnim_4B1320();
+                Event_Broadcast_422BC0(kEventMudokonComfort, this);
             }
 
             if (!vIsFacingMe_4254A0(sActiveHero_5C1B68) || IsInInvisibleZone_425710(sActiveHero_5C1B68) || sActiveHero_5C1B68->field_114_flags.Get(Flags_114::e114_Bit8_bInvisible) || IsAbeEnteringDoor_4BB990(sControlledCharacter_5C1B8C))

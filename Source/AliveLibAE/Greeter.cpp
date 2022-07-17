@@ -455,24 +455,24 @@ EXPORT s16 Greeter::vTakeDamage_447C20(BaseGameObject* pFrom)
     switch (pFrom->Type())
     {
         case AETypes::eBullet_15:
-        if (static_cast<Bullet*>(pFrom)->field_30_x_distance <= FP_FromInteger(0))
-        {
-            field_20_animation.field_4_flags.Set(AnimFlags::eBit5_FlipX);
-        }
-        else
-        {
-            field_20_animation.field_4_flags.Clear(AnimFlags::eBit5_FlipX);
-        }
+            if (static_cast<Bullet*>(pFrom)->field_30_x_distance <= FP_FromInteger(0))
+            {
+                field_20_animation.field_4_flags.Set(AnimFlags::eBit5_FlipX);
+            }
+            else
+            {
+                field_20_animation.field_4_flags.Clear(AnimFlags::eBit5_FlipX);
+            }
 
-        if (++field_12C_timesShot <= 10)
-        {
-            BounceBackFromShot_447B10();
-        }
-        else
-        {
-            BlowUp_447E50();
-        }
-        return 1;
+            if (++field_12C_timesShot <= 10)
+            {
+                BounceBackFromShot_447B10();
+            }
+            else
+            {
+                BlowUp_447E50();
+            }
+            return 1;
 
         case AETypes::eDrill_30:
         case AETypes::eBaseBomb_46:
@@ -483,6 +483,39 @@ EXPORT s16 Greeter::vTakeDamage_447C20(BaseGameObject* pFrom)
         case AETypes::eExplosion_109:
             BlowUp_447E50();
             return 1;
+
+        case AETypes::eAbe_69:
+        {
+            field_10C_health = FP_FromInteger(0);
+
+            auto pExplosion = ae_new<Explosion>();
+            if (pExplosion)
+            {
+                pExplosion->dontDoDamageToAbe = true;
+                pExplosion->ctor_4A1200(
+                    field_B8_xpos,
+                    field_BC_ypos - (field_CC_sprite_scale * FP_FromInteger(5)),
+                    field_CC_sprite_scale,
+                    0);
+            }
+
+            auto pGibs = ae_new<Gibs>();
+            if (pGibs)
+            {
+                pGibs->ctor_40FB40(
+                    GibType::Metal_5,
+                    field_B8_xpos,
+                    field_BC_ypos + FP_FromInteger(50),
+                    FP_FromInteger(0),
+                    FP_FromInteger(0),
+                    field_CC_sprite_scale,
+                    0);
+            }
+
+            field_6_flags.Set(BaseGameObject::eDead_Bit3);
+            field_12E_bDontSetDestroyed = 0;
+            return 1;
+        }
 
         case AETypes::eSlamDoor_122:
             BounceBackFromShot_447B10();

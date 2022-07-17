@@ -20,6 +20,7 @@
 #include "Sys_common.hpp"
 #include "Renderer/IRenderer.hpp"
 #include <gmock/gmock.h>
+#include "ChaosMod.hpp"
 
 // Frame call backs ??
 EXPORT s32 CC Animation_OnFrame_Common_Null_455F40(void*, s16*)
@@ -38,8 +39,14 @@ EXPORT s32 CC Animation_OnFrame_Common_4561B0(void* pObjPtr, s16* pData)
     const AnimRecord& dustRec = AnimRec(AnimId::Dust_Particle);
     u8** ppAnimData = ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, dustRec.mResourceId, FALSE, FALSE);
 
+    auto chaosEffect = chaosMod.getActiveEffect();
+    if (chaosEffect == ChaosEffect::HorizontalDinnerbone || chaosEffect == ChaosEffect::Dinnerbone)
+    {
+        chaosMod.markEffectAsUsed();
+    }
+
     FP xOff = {};
-    if (pObj->field_20_animation.field_4_flags.Get(AnimFlags::eBit5_FlipX))
+    if (pObj->field_20_animation.field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
     {
         xOff = -(pObj->field_CC_sprite_scale * FP_FromInteger(pData[0]));
     }
@@ -48,8 +55,20 @@ EXPORT s32 CC Animation_OnFrame_Common_4561B0(void* pObjPtr, s16* pData)
         xOff = (pObj->field_CC_sprite_scale * FP_FromInteger(pData[0]));
     }
 
+    // ChaosMod yOff
+    FP yOff = {};
+    if (pObj->field_20_animation.field_4_flags.Get(AnimFlags::eBit6_FlipY) != (chaosEffect == ChaosEffect::Dinnerbone))
+    {
+        yOff = -(pObj->field_CC_sprite_scale * FP_FromInteger(pData[1]) + FP_FromInteger(25));
+    }
+    else
+    {
+        yOff = (pObj->field_CC_sprite_scale * FP_FromInteger(pData[1]) + FP_FromInteger(25));
+    }
+
     FP xpos = xOff + pObj->field_B8_xpos;
-    FP ypos = (pObj->field_CC_sprite_scale * FP_FromInteger(pData[1])) + pObj->field_BC_ypos + FP_FromInteger(25);
+    FP ypos = yOff + pObj->field_BC_ypos;
+    //FP ypos = (pObj->field_CC_sprite_scale * FP_FromInteger(pData[1])) + pObj->field_BC_ypos + FP_FromInteger(25);
     if (!pObj->field_100_pCollisionLine)
     {
         return 1;
@@ -140,10 +159,16 @@ EXPORT s32 CC Animation_OnFrame_Common_434130(void* pObjPtr, s16* pData)
         return 1;
     }
 
+    auto chaosEffect = chaosMod.getActiveEffect();
+    if (chaosEffect == ChaosEffect::HorizontalDinnerbone || chaosEffect == ChaosEffect::Dinnerbone)
+    {
+        chaosMod.markEffectAsUsed();
+    }
+
     // flying slig: kVaporResID
     u8** ppAnimRes = pObj->field_10_resources_array.ItemAt(7);
     FP xOff = {};
-    if (pObj->field_20_animation.field_4_flags.Get(AnimFlags::eBit5_FlipX))
+    if (pObj->field_20_animation.field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
     {
         xOff = -(pObj->field_CC_sprite_scale * FP_FromInteger(pData[0]));
     }
@@ -152,8 +177,20 @@ EXPORT s32 CC Animation_OnFrame_Common_434130(void* pObjPtr, s16* pData)
         xOff = (pObj->field_CC_sprite_scale * FP_FromInteger(pData[0]));
     }
 
+    // ChaosMod yOff
+    FP yOff = {};
+    if (pObj->field_20_animation.field_4_flags.Get(AnimFlags::eBit6_FlipY) != (chaosEffect == ChaosEffect::Dinnerbone))
+    {
+        yOff = -(pObj->field_CC_sprite_scale * (FP_FromInteger(pData[1]) + FP_FromInteger(25)));
+    }
+    else
+    {
+        yOff = (pObj->field_CC_sprite_scale * (FP_FromInteger(pData[1]) + FP_FromInteger(25)));
+    }
+
     FP xpos = xOff + pObj->field_B8_xpos;
-    FP ypos = (pObj->field_CC_sprite_scale * (FP_FromInteger(pData[1]) + FP_FromInteger(25))) + pObj->field_BC_ypos;
+    FP ypos = yOff + pObj->field_BC_ypos;
+    //FP ypos = (pObj->field_CC_sprite_scale * (FP_FromInteger(pData[1]) + FP_FromInteger(25))) + pObj->field_BC_ypos;
 
     if (Event_Get_422C00(kEventDeathReset))
     {
@@ -205,8 +242,14 @@ s32 CC Animation_OnFrame_Slog_4C3030(void* pObjPtr, s16* pPoints)
         return 1;
     }
 
+    auto chaosEffect = chaosMod.getActiveEffect();
+    if (chaosEffect == ChaosEffect::HorizontalDinnerbone) // TODO CHAOS handle Dinnerbone when bloodY has been handled
+    {
+        chaosMod.markEffectAsUsed();
+    }
+
     FP bloodX = {};
-    if (pSlog->field_20_animation.field_4_flags.Get(AnimFlags::eBit5_FlipX))
+    if (pSlog->field_20_animation.field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
     {
         bloodX = pSlog->field_B8_xpos - (pSlog->field_CC_sprite_scale * FP_FromInteger(pPoints[0]));
     }
@@ -216,6 +259,7 @@ s32 CC Animation_OnFrame_Slog_4C3030(void* pObjPtr, s16* pPoints)
     }
 
     const FP bloodY = (pSlog->field_CC_sprite_scale * FP_FromInteger(pPoints[1])) + pSlog->field_BC_ypos;
+    // TODO CHAOS handle Dinnerbone
 
     auto pBlood = ae_new<Blood>();
     if (pBlood)
@@ -496,7 +540,16 @@ void Animation::vRender_40B820(s32 xpos, s32 ypos, PrimHeader** ppOt, s16 width,
     PolyFT4_Init(pPoly);
     Poly_Set_SemiTrans_4F8A60(&pPoly->mBase.header, field_4_flags.Get(AnimFlags::eBit15_bSemiTrans));
     Poly_Set_Blending_4F8A20(&pPoly->mBase.header, field_4_flags.Get(AnimFlags::eBit16_bBlending));
-    SetRGB0(pPoly, field_8_r, field_9_g, field_A_b);
+    if (chaosMod.getActiveEffect() == ChaosEffect::Disco)
+    {
+        SetRGB0(pPoly, Math_NextRandom(), Math_NextRandom(), Math_NextRandom());
+        chaosMod.markEffectAsUsed();
+    }
+    else
+    {
+        SetRGB0(pPoly, field_8_r, field_9_g, field_A_b);
+    }
+
     SetTPage(pPoly, static_cast<u16>(PSX_getTPage_4F60E0(textureMode, field_B_render_mode, field_84_vram_rect.x, field_84_vram_rect.y)));
     SetClut(pPoly, static_cast<u16>(PSX_getClut_4F6350(field_8C_pal_vram_xy.field_0_x, field_8C_pal_vram_xy.field_2_y)));
 
@@ -520,6 +573,15 @@ void Animation::vRender_40B820(s32 xpos, s32 ypos, PrimHeader** ppOt, s16 width,
     const u8 u0 = pFrameHeader->field_4_width + u1 - 1;
     const u8 v1 = pFrameHeader->field_5_height + v0 - 1;
 
+    if (&sActiveHero_5C1B68->field_20_animation == this && chaosMod.getActiveEffect() == ChaosEffect::FatAbe)
+    {
+        frame_height_fixed *= FP_FromDouble(1.1);
+        frame_width_fixed *= FP_FromDouble(1.6);
+        yOffset_fixed -= frame_height_fixed * FP_FromDouble(0.05);
+        xOffSet_fixed -= frame_height_fixed * FP_FromDouble(0.3);
+        chaosMod.markEffectAsUsed();
+    }
+
     if (field_14_scale != FP_FromDouble(1.0))
     {
         // Apply scale to x/y pos
@@ -538,11 +600,17 @@ void Animation::vRender_40B820(s32 xpos, s32 ypos, PrimHeader** ppOt, s16 width,
         yOffset_fixed = (yOffset_fixed * field_14_scale) - FP_FromDouble(1.0);
     }
 
+    auto chaosEffect = chaosMod.getActiveEffect();
+    if (chaosEffect == ChaosEffect::HorizontalDinnerbone || chaosEffect == ChaosEffect::Dinnerbone)
+    {
+        chaosMod.markEffectAsUsed();
+    }
+
     s16 polyXPos = 0;
     s16 polyYPos = 0;
-    if (field_4_flags.Get(AnimFlags::eBit6_FlipY))
+    if (field_4_flags.Get(AnimFlags::eBit6_FlipY) != (chaosEffect == ChaosEffect::Dinnerbone))
     {
-        if (field_4_flags.Get(AnimFlags::eBit5_FlipX))
+        if (field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
         {
             SetUV0(pPoly, u0, v1);
             SetUV1(pPoly, u1, v1);
@@ -558,13 +626,14 @@ void Animation::vRender_40B820(s32 xpos, s32 ypos, PrimHeader** ppOt, s16 width,
             SetUV3(pPoly, u0, v0);
             polyXPos = xpos_unknown + FP_AdjustedToInteger(xOffSet_fixed, FP_FromDouble(0.499));
         }
+        // TODO CHAOS Dinnerbone - remove the Height calc?
         // TODO: Might be wrong because this was doing something with the sign bit abs() ??
         polyYPos = static_cast<s16>(ypos) - FP_AdjustedToInteger(yOffset_fixed, FP_FromDouble(0.499)) - FP_AdjustedToInteger(frame_height_fixed, FP_FromDouble(0.499));
     }
     else
     {
         FP yPosFixed;
-        if (field_4_flags.Get(AnimFlags::eBit5_FlipX))
+        if (field_4_flags.Get(AnimFlags::eBit5_FlipX) != (chaosEffect == ChaosEffect::HorizontalDinnerbone))
         {
             SetUV0(pPoly, u0, v0);
             SetUV1(pPoly, u1, v0);

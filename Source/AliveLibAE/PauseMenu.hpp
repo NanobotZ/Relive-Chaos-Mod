@@ -106,8 +106,6 @@ public:
         s8 field_13_padding;
     };
     ALIVE_ASSERT_SIZEOF(PauseMenu::PauseMenuPage, 0x14);
-
-private:
     void RestartPath();
 
 public:

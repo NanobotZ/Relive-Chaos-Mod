@@ -241,6 +241,7 @@ s16 MovingBomb::vTakeDamage_470990(BaseGameObject* pFrom)
         case AETypes::eAbilityRing_104:
         case AETypes::eExplosion_109:
         case AETypes::eShrykull_121:
+        case AETypes::eGrenade_65:
         {
             field_10C_health = FP_FromInteger(0);
             auto pExplosion = ae_new<Explosion>();

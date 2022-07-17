@@ -5,6 +5,8 @@
 #include "Map.hpp"
 #include "PathData.hpp"
 #include "Throwable.hpp"
+#include "Abe.hpp"
+#include "ChaosModHelpers.hpp"
 
 ALIVE_VAR(1, 0x5d1e2c, ThrowableArray*, gpThrowableArray_5D1E2C, nullptr);
 
@@ -20,6 +22,12 @@ void CCSTD FreeResourceArray_49AEC0(DynamicArrayT<u8*>* pArray)
 
 void CC LoadRockTypes_49AB30(LevelIds levelNumber, u16 pathNumber)
 {
+    if (sActiveHero_5C1B68->field_throwableType != AETypes::eNone_0)
+    {
+        ChaosModHelpers::LoadThrowableResources(sActiveHero_5C1B68->field_throwableType);
+        return;
+    }
+
     Bool32 bDoLoadingLoop = FALSE;
     const u8 throwableTypeIdx = LOBYTE(Path_Get_Bly_Record_460F30(levelNumber, pathNumber)->field_C_overlay_id);
 
@@ -206,7 +214,7 @@ void ThrowableArray::vScreenChange_49AAA0()
     }
 }
 
-void ThrowableArray::Add_49A7A0(s16 count)
+void ThrowableArray::Add_49A7A0(s16 count, AETypes forceType)
 {
     if (field_6_flags.Get(BaseGameObject::eDead_Bit3))
     {
@@ -237,7 +245,7 @@ void ThrowableArray::Add_49A7A0(s16 count)
     {
         if (!field_22_flags.Get(Flags_22::eBit2_Unknown))
         {
-            switch (throwable_types_55FAFC[gMap_5C3030.field_22_overlayID])
+            switch (forceType == AETypes::eNone_0 ? throwable_types_55FAFC[gMap_5C3030.field_22_overlayID] : forceType)
             {
                 case AETypes::eBone_11:
                     Add_Resource_4DC130(ResourceManager::Resource_Animation, AEResourceID::kBoneResID);

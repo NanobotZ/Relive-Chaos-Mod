@@ -3,6 +3,7 @@
 #include "PsxRender.hpp"
 #include "Psx.hpp"
 #include "VRam.hpp"
+#include "ChaosMod.hpp"
 
 void SoftwareRenderer::Destroy()
 {
@@ -67,7 +68,44 @@ void SoftwareRenderer::EndFrame()
 
 void SoftwareRenderer::BltBackBuffer(const SDL_Rect* pCopyRect, const SDL_Rect* pDst)
 {
-    SDL_RenderCopy(mRenderer, mBackBufferTexture, pCopyRect, pDst);
+    static double degrees = 0.0;
+    SDL_RendererFlip flip = SDL_FLIP_NONE;
+
+    auto activeChaosEffect = chaosMod.getActiveEffect();
+    if (activeChaosEffect == ChaosEffect::FlipScreenX)
+    {
+        flip = SDL_FLIP_HORIZONTAL;
+        chaosMod.markEffectAsUsed();
+    }
+    else if (activeChaosEffect == ChaosEffect::FlipScreenY)
+    {
+        flip = SDL_FLIP_VERTICAL;
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeChaosEffect == ChaosEffect::BarrelRoll)
+    {
+        degrees += 2.0;
+        chaosMod.markEffectAsUsed();
+    }
+    else
+    {
+        degrees = 0.0;
+    }
+
+    /*if (chaosMod.getActiveEffect() == ChaosEffect::Disco)
+        SDL_SetTextureColorMod(mBackBufferTexture, Math_NextRandom(), Math_NextRandom(), Math_NextRandom());
+    else
+        SDL_SetTextureColorMod(mBackBufferTexture, 255, 255, 255);*/
+    
+    if (flip == SDL_FLIP_NONE && degrees == 0.0)
+    {
+        SDL_RenderCopy(mRenderer, mBackBufferTexture, pCopyRect, pDst);
+    }
+    else
+    {
+        SDL_RenderCopyEx(mRenderer, mBackBufferTexture, pCopyRect, pDst, degrees, nullptr, flip);
+    }
 }
 
 void SoftwareRenderer::OutputSize(s32* w, s32* h)

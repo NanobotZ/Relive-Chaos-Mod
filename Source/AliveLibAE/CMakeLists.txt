@@ -389,7 +389,7 @@ SET(AliveLibAESrc
     Layer.hpp
 )
 
-add_library(AliveLibAE ${AliveLibAESrc})
+add_library(AliveLibAE ${AliveLibAESrc} "ChaosMod.hpp" "ChaosMod.cpp" "ChaosModHelpers.hpp" "ChaosModHelpers.cpp")
 
 target_include_directories(AliveLibAE PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

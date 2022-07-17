@@ -16,6 +16,9 @@
 #include "Renderer/IRenderer.hpp"
 #include "GameAutoPlayer.hpp"
 #include <gmock/gmock.h>
+#include "ChaosMod.hpp"
+#include "ScreenManager.hpp"
+#include "Input.hpp"
 
 extern bool gLatencyHack;
 
@@ -509,6 +512,10 @@ EXPORT void CC PSX_PutDispEnv_Impl_4F5640(const PSX_DISPENV* pDispEnv, s8 a2)
         }
 
         PSX_DrawDebugTextBuffers(pBmp, rect);
+        if (pScreenManager_5BB5F4)
+            pScreenManager_5BB5F4->InvalidateRect_40EC10(0, 0, 640, 240);
+
+        // TODO CHAOS filp screen x/y
 
         if (a2 && VGA_IsWindowMode_4F31E0())
         {
@@ -894,11 +901,22 @@ EXPORT s32 CC PSX_VSync_4F6170(s32 mode)
     else
     {
         s32 frameTimeInMilliseconds = currentTime - sVSyncLastMillisecond_BD0F2C;
-        if (mode > 0 && frameTimeInMilliseconds < 1000 * mode / 60)
+        auto speedModifier = chaosMod.getSpeedModifier();
+
+        if (chaosMod.getActiveEffect() == ChaosEffect::Superhot && !(Input().field_0_pads[sCurrentControllerIndex_5C1BBE].field_0_pressed))
+        {
+            speedModifier = 10.0f;
+        }
+
+        if (speedModifier != 1.0f)
+        {
+            chaosMod.markEffectAsUsed();
+        }
+
+        if (mode > 0 && frameTimeInMilliseconds < speedModifier * 1000 * mode / 60)
         {
             s32 timeSinceLastFrame = 0;
             sVSync_Unused_578325 = 1;
-
             do
             {
                 timeSinceLastFrame = SYS_GetTicks() - sVSyncLastMillisecond_BD0F2C;
@@ -910,9 +928,9 @@ EXPORT s32 CC PSX_VSync_4F6170(s32 mode)
                     SDL_Delay(1);
                 }
             }
-            while (timeSinceLastFrame < 1000 * mode / 60);
+            while (timeSinceLastFrame < speedModifier * 1000 * mode / 60);
 
-            frameTimeInMilliseconds = 1000 * mode / 60;
+            frameTimeInMilliseconds = (s32) (speedModifier * 1000 * mode / 60);
         }
 
         sVSyncLastMillisecond_BD0F2C += frameTimeInMilliseconds;

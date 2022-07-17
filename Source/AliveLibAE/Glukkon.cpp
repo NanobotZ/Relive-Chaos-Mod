@@ -33,6 +33,7 @@
 #include "Sound/Midi.hpp"
 #include "Sys_common.hpp"
 #include "Grid.hpp"
+#include "ChaosMod.hpp"
 
 #define MAKE_STRINGS(VAR) #VAR,
 const char_type* const sGlukkonMotionNames[25] = {
@@ -914,7 +915,7 @@ void Glukkon::M_Speak1_11_4437D0()
                         evToBePushed = GameSpeakEvents::Glukkon_What_47;
                         break;
                     default:
-                        evToBePushed = GameSpeakEvents::eUnknown_35; //GlukkonSpeak::None
+                        evToBePushed = GameSpeakEvents::eUnknown_35; // GlukkonSpeak::None
                         break;
                 }
                 if (evToBePushed != GameSpeakEvents::eUnknown_35)
@@ -1540,7 +1541,7 @@ s16 Glukkon::Brain_2_Slapped_441720()
             {
                 field_1F8_panic_timer = sGnFrame_5C1B84;
             }
-            else if ((s32)(sGnFrame_5C1B84 - field_1F8_panic_timer) > field_1A8_tlvData.field_1A_to_calm_delay)
+            else if ((s32) (sGnFrame_5C1B84 - field_1F8_panic_timer) > field_1A8_tlvData.field_1A_to_calm_delay)
             {
                 SwitchStates_Do_Operation_465F00(field_1A8_tlvData.field_18_help_switch_id, SwitchOp::eSetFalse_1);
                 SetBrain(&Glukkon::Brain_0_Calm_WalkAround_440B40);
@@ -1639,10 +1640,7 @@ s16 Glukkon::Brain_3_PlayerControlled_441A30()
 
         case 1:
         {
-            if ((field_1A8_tlvData.field_22_glukkon_type != GlukkonTypes::StoryAslik_1 &&
-                field_1A8_tlvData.field_22_glukkon_type != GlukkonTypes::StoryDripik_2 &&
-                field_1A8_tlvData.field_22_glukkon_type != GlukkonTypes::StoryPhleg_3) ||
-                !SwitchStates_Get_466020(field_1A8_tlvData.field_26_play_movie_switch_id))
+            if ((field_1A8_tlvData.field_22_glukkon_type != GlukkonTypes::StoryAslik_1 && field_1A8_tlvData.field_22_glukkon_type != GlukkonTypes::StoryDripik_2 && field_1A8_tlvData.field_22_glukkon_type != GlukkonTypes::StoryPhleg_3) || !SwitchStates_Get_466020(field_1A8_tlvData.field_26_play_movie_switch_id))
             {
                 if (Input_IsChanting_45F260() && field_106_current_motion != eGlukkonMotions::M_Jump_4_443030 && !field_1E2_prevent_depossession)
                 {
@@ -1788,11 +1786,11 @@ static GibType AsGibType(GlukkonTypes glukkonType)
 
         case GlukkonTypes::Normal_4:
             ALIVE_FATAL("Didn't expect glukkon type 4 for gibs!");
-            //return GibType::Fleech_10; // TODO: This can't be correct
+            // return GibType::Fleech_10; // TODO: This can't be correct
 
         case GlukkonTypes::Normal_5:
             ALIVE_FATAL("Didn't expect glukkon type 5 for gibs!");
-            //return GibType::Glukkon_6; // TODO: Was out of range
+            // return GibType::Glukkon_6; // TODO: Was out of range
 
         default:
             return GibType::Glukkon_6;
@@ -2213,7 +2211,7 @@ void Glukkon::vUpdate_43F770()
         // TODO: This is extra debug logging to figure out the motion names
         if (oldMotion != field_106_current_motion)
         {
-            //LOG_INFO("Glukkon: Old motion = " << sGlukkonMotionNames[oldMotion] << " new motion = " << sGlukkonMotionNames[field_106_current_motion]);
+            // LOG_INFO("Glukkon: Old motion = " << sGlukkonMotionNames[oldMotion] << " new motion = " << sGlukkonMotionNames[field_106_current_motion]);
         }
 
         if (oldXPos != field_B8_xpos || oldYPos != field_BC_ypos)
@@ -2853,7 +2851,7 @@ void CC Glukkon::PlaySound_4447D0(s32 sndIdx, Glukkon* pGlukkon)
             return;
     }
 
-    if (pGlukkon->field_CC_sprite_scale == FP_FromDouble(0.5)) //TODO figure out if this does actually happen
+    if (pGlukkon->field_CC_sprite_scale == FP_FromDouble(0.5)) // TODO figure out if this does actually happen
     {
         volumeLeft = FP_GetExponent(FP_FromInteger(volumeLeft * 2) / FP_FromInteger(3));
         volumeRight = FP_GetExponent(FP_FromInteger(volumeRight * 2) / FP_FromInteger(3));
@@ -2886,10 +2884,7 @@ void Glukkon::ToDead_43F640()
 
     SwitchStates_Do_Operation_465F00(field_1A8_tlvData.field_18_help_switch_id, SwitchOp::eSetFalse_1);
 
-    if ((field_1A8_tlvData.field_22_glukkon_type == GlukkonTypes::StoryAslik_1 ||
-        field_1A8_tlvData.field_22_glukkon_type == GlukkonTypes::StoryDripik_2 ||
-        field_1A8_tlvData.field_22_glukkon_type == GlukkonTypes::StoryPhleg_3) &&
-        !SwitchStates_Get_466020(field_1A8_tlvData.field_26_play_movie_switch_id))
+    if ((field_1A8_tlvData.field_22_glukkon_type == GlukkonTypes::StoryAslik_1 || field_1A8_tlvData.field_22_glukkon_type == GlukkonTypes::StoryDripik_2 || field_1A8_tlvData.field_22_glukkon_type == GlukkonTypes::StoryPhleg_3) && !SwitchStates_Get_466020(field_1A8_tlvData.field_26_play_movie_switch_id))
     {
         // If an exec is dead trigger ze gas
         SwitchStates_Do_Operation_465F00(field_1A8_tlvData.field_24_death_switch_id, SwitchOp::eSetTrue_0);
@@ -3191,18 +3186,27 @@ s16 Glukkon::vTakeDamage_43FA40(BaseGameObject* pFrom)
         case AETypes::eAbe_69:
             if (sActiveHero_5C1B68->field_106_current_motion == eAbeMotions::Motion_62_Punch_454750)
             {
-                if (Math_NextRandom() <= 32u)
+                if (chaosMod.getActiveEffect() == ChaosEffect::OnePunchAbe)
                 {
-                    Glukkon::PlaySound_GameSpeak_444AF0(GlukkonSpeak::Unused_9, 0, 0, 0);
+                    SetBrain(&Glukkon::Brain_4_Death_442010);
+                    field_210_brain_sub_state = 2;
+                    Event_Broadcast_422BC0(kEventMudokonComfort, this);
                 }
                 else
                 {
-                    Glukkon::PlaySound_GameSpeak_444AF0(GlukkonSpeak::Hey_0, 0, 0, 0);
+                    if (Math_NextRandom() <= 32u)
+                    {
+                        Glukkon::PlaySound_GameSpeak_444AF0(GlukkonSpeak::Unused_9, 0, 0, 0);
+                    }
+                    else
+                    {
+                        Glukkon::PlaySound_GameSpeak_444AF0(GlukkonSpeak::Hey_0, 0, 0, 0);
+                    }
+                    field_1F8_panic_timer = sGnFrame_5C1B84;
+                    SetAnim_43F9C0(eGlukkonMotions::M_KnockBack_3_442F40, TRUE);
+                    SetBrain(&Glukkon::Brain_2_Slapped_441720);
+                    field_210_brain_sub_state = 0;
                 }
-                field_1F8_panic_timer = sGnFrame_5C1B84;
-                SetAnim_43F9C0(eGlukkonMotions::M_KnockBack_3_442F40, TRUE);
-                SetBrain(&Glukkon::Brain_2_Slapped_441720);
-                field_210_brain_sub_state = 0;
             }
             break;
 

@@ -121,7 +121,7 @@ s16 SecurityOrb::vTakeDamage_466BB0(BaseGameObject* pFrom)
     field_6_flags.Set(BaseGameObject::eDead_Bit3);
     field_10C_health = FP_FromInteger(0);
 
-    if (pFrom->Type() == AETypes::eMineCar_89 || pFrom->Type() == AETypes::eAbilityRing_104 || pFrom->Type() == AETypes::eShrykull_121)
+    if (pFrom->Type() == AETypes::eMineCar_89 || pFrom->Type() == AETypes::eAbilityRing_104 || pFrom->Type() == AETypes::eShrykull_121 || pFrom->Type() == AETypes::eGrenade_65)
     {
         auto pExplosionMem = ae_new<Explosion>();
         if (pExplosionMem)

@@ -4,6 +4,7 @@
 #include "BaseAliveGameObject.hpp"
 #include "Path.hpp"
 #include "GameSpeak.hpp"
+#include "ChaosMod.hpp"
 
 enum class RingTypes : s16;
 

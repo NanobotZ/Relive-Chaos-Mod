@@ -18,6 +18,7 @@
 #include "Sys.hpp"
 #include "PathDataExtensions.hpp"
 #include "GameAutoPlayer.hpp"
+#include "ChaosMod.hpp"
 
 ALIVE_VAR(1, 0x5ca4d8, s8, sQuicksave_SaveNextFrame_5CA4D8, 0);
 ALIVE_VAR(1, 0x5ca4d9, s8, sQuicksave_LoadNextFrame_5CA4D9, 0);
@@ -818,7 +819,7 @@ std::vector<CustomPauseMenuItem> devCheatsMenuItems({
      }},
     {"Give Rocks", [](CustomPauseMenu*)
      {
-         sActiveHero_5C1B68->field_1A2_throwable_count = 99;
+         sActiveHero_5C1B68->field_1A2_throwable_count = 9;
          DEV_CONSOLE_MESSAGE("(CHEAT) Got Bones", 4);
      }},
     {"Open All Doors", [](CustomPauseMenu* pm)
@@ -1002,6 +1003,8 @@ void PauseMenu::RestartPath()
     gMap_5C3030.field_8_force_load = TRUE;
     if (sActiveHero_5C1B68->field_1A2_throwable_count)
     {
+        // TODO CHAOS figure out if there's a need to handle custom grenade types
+
         LoadRockTypes_49AB30(
             sActiveQuicksaveData_BAF7F8.field_244_restart_path_world_info.field_4_level,
             sActiveQuicksaveData_BAF7F8.field_244_restart_path_world_info.field_6_path);

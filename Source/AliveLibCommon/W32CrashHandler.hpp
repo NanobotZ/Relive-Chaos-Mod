@@ -12,6 +12,7 @@
     #include "SDL.h"
     #include "relive_config.h"
     #include "Sys_common.hpp"
+    #include "ChaosMod.hpp"
 
     #ifndef __MINGW32__
 
@@ -60,9 +61,17 @@ inline void create_minidump(PEXCEPTION_POINTERS /* apExceptionInfo */)
 
     #endif
 
-inline LONG WINAPI crash_handler(PEXCEPTION_POINTERS pExceptionInfo)
+inline void print_chaos_mod_active_effect()
 {
-    create_minidump(pExceptionInfo);
+    char_type errMsg[1024] = {};
+    _snprintf(errMsg, _countof(errMsg), "R.E.L.I.V.E. has crashed.\nChaos Mod Active Effect: %d", (int)chaosMod.getRealActiveEffect());
+    Alive_Show_ErrorMsg(errMsg);
+}
+
+inline LONG WINAPI crash_handler(PEXCEPTION_POINTERS /*pExceptionInfo*/)
+{
+    // create_minidump(pExceptionInfo);
+    print_chaos_mod_active_effect();
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
