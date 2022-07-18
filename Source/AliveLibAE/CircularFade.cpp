@@ -20,7 +20,7 @@ CircularFade* CircularFade::ctor_4CE100(FP xpos, FP ypos, FP scale, s16 directio
     }
     else
     {
-        field_1B8_fade_colour = 255;
+        field_1B8_fade_colour = createdByChaosMod ? 140 : 255;
     }
 
     vFadeIn_4CE300(direction, destroyOnDone);
@@ -184,7 +184,7 @@ void CircularFade::vRender_4CE3F0(PrimHeader** ppOt)
 
     OrderingTable_Add_4F8AA0(OtLayer(ppOt, field_20_animation.field_C_render_layer), &field_198_tPages[gPsxDisplay_5C1130.field_C_buffer_index].mBase);
 
-    if (field_1B8_fade_colour < 255)
+    if (field_1B8_fade_colour < (createdByChaosMod ? 140 : 255))
     {
         pScreenManager_5BB5F4->InvalidateRect_40EC10(
             0,
@@ -193,7 +193,7 @@ void CircularFade::vRender_4CE3F0(PrimHeader** ppOt)
             gPsxDisplay_5C1130.field_2_height);
     }
 
-    if ((field_1B8_fade_colour == 255 && field_F4_flags.Get(Flags::eBit1_FadeIn)) || (field_1B8_fade_colour == 0 && !(field_F4_flags.Get(Flags::eBit1_FadeIn))))
+    if ((field_1B8_fade_colour == (createdByChaosMod ? 140 : 255) && field_F4_flags.Get(Flags::eBit1_FadeIn)) || (field_1B8_fade_colour == 0 && !(field_F4_flags.Get(Flags::eBit1_FadeIn))))
     {
         if (!(field_F4_flags.Get(Flags::eBit2_Done)))
         {
@@ -220,9 +220,9 @@ void CircularFade::vUpdate_4CE380()
         field_1B8_fade_colour += field_1BA_speed;
         if (field_F4_flags.Get(Flags::eBit1_FadeIn))
         {
-            if (field_1B8_fade_colour > 255)
+            if (field_1B8_fade_colour > createdByChaosMod ? 140 : 255)
             {
-                field_1B8_fade_colour = 255;
+                field_1B8_fade_colour = createdByChaosMod ? 140 : 255;
             }
         }
         else if (field_1B8_fade_colour < 0)

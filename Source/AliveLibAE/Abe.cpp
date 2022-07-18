@@ -942,7 +942,8 @@ Abe* Abe::ctor_44AD10(s32 /*frameTableOffset*/, s32 /*r*/, s32 /*g*/, s32 /*b*/)
     // auto testAnim = ae_new<TestAnimation>(); testAnim->ctor();
 
 
-    field_throwableType = AETypes::eNone_0;
+    field_chaos_throwableType = AETypes::eNone_0;
+    field_chaos_fade_obj_id = -1;
 
     return this;
 }
@@ -1523,7 +1524,7 @@ void Abe::Update_449DC0()
     {
         s16 throwablesToAdd = 9 - field_1A2_throwable_count;
         field_1A2_throwable_count = 9;
-        field_throwableType = activeThrowableEffect;
+        field_chaos_throwableType = activeThrowableEffect;
 
         ChaosModHelpers::LoadThrowableResources(activeThrowableEffect);
 
@@ -1571,15 +1572,28 @@ void Abe::Update_449DC0()
 
     if (activeEffect == ChaosEffect::SpawnUXBs)
     {
-        ChaosModHelpers::SpawnUXBs(field_B8_xpos, field_BC_ypos, field_CC_sprite_scale, Path_UXB::StartState::eOn_0, 12); // we want the UXB's to spawn on Abe, not on controlled character
-
         field_114_flags.Set(Flags_114::e114_MotionChanged_Bit2);
         field_C4_velx = FP_FromInteger(0);
         field_C8_vely = FP_FromInteger(0);
         field_106_current_motion = eAbeMotions::Motion_0_Idle_44EEB0;
         field_108_next_motion = eAbeMotions::Motion_0_Idle_44EEB0;
         field_100_pCollisionLine = nullptr;
+
+        FP hitX = {};
+        FP hitY = {};
+        PathLine* pLine = nullptr;
+        if (sCollisions_DArray_5C1128->Raycast_417A60(
+                field_B8_xpos, field_BC_ypos - FP_FromInteger(40),
+                field_BC_ypos, field_BC_ypos + FP_FromInteger(240),
+                &pLine, &hitX, &hitY, field_CC_sprite_scale == FP_FromInteger(1) ? 1 : 16))
+        {
+            field_100_pCollisionLine = pLine; // place Abe on the ground in case he is in the air, hope there isn't anything scary below him :P
+            field_BC_ypos = hitY;
+        }
+
         MapFollowMe_408D10(1);
+
+        ChaosModHelpers::SpawnUXBs(field_B8_xpos, field_BC_ypos, field_CC_sprite_scale, Path_UXB::StartState::eOn_0, 12); // we want the UXB's to spawn on Abe, not on controlled character
 
         chaosMod.markEffectAsUsed();
     }
@@ -1590,6 +1604,43 @@ void Abe::Update_449DC0()
         {
             sInputObject_5BD4E0.field_0_pads[sCurrentControllerIndex_5C1BBE].field_0_pressed = 0;
         }
+    }
+
+    if (activeEffect == ChaosEffect::Fade)
+    {
+        if (field_chaos_fade_obj_id == -1 && chaosMod.getEffectDuration() >= 2)
+        {
+            auto pCircularFade = ae_new<CircularFade>();
+            if (pCircularFade)
+            {
+                pCircularFade->createdByChaosMod = true;
+                pCircularFade->ctor_4CE100(field_B8_xpos, field_BC_ypos, field_CC_sprite_scale, 1, 0);
+                field_chaos_fade_obj_id = pCircularFade->field_8_object_id;
+            }
+        }
+        else
+        {
+            auto pObj = sObjectIds_5C1B70.Find_449CF0(field_chaos_fade_obj_id);
+            if (pObj)
+            {
+                auto pCircularFade = static_cast<CircularFade*>(pObj);
+                
+                if (chaosMod.getEffectDuration() < 2)
+                {
+                    pCircularFade->VFadeIn_4CE300(0, 1);
+                    field_chaos_fade_obj_id = -1;
+                }
+
+                pCircularFade->field_B8_xpos = field_B8_xpos;
+                pCircularFade->field_BC_ypos = field_BC_ypos;
+            }
+            else
+            {
+                field_chaos_fade_obj_id = -1;
+            }
+        }
+
+        chaosMod.markEffectAsUsed();
     }
 
 
@@ -2138,7 +2189,7 @@ void Abe::vScreenChanged_44D240()
             }
 
             field_1A2_throwable_count = 0;
-            field_throwableType = AETypes::eNone_0;
+            field_chaos_throwableType = AETypes::eNone_0;
 
             if (field_168_ring_pulse_timer > 0 && field_16C_bHaveShrykull)
             {
@@ -2612,7 +2663,7 @@ s16 Abe::vTakeDamage_44BB50(BaseGameObject* pFrom)
                 pThrowable->VTimeToExplodeRandom_411490(); // Start count down ?
             }
             field_1A2_throwable_count = 0;
-            field_throwableType = AETypes::eNone_0;
+            field_chaos_throwableType = AETypes::eNone_0;
             break;
 
         case AETypes::eRockSpawner_48:
@@ -8227,7 +8278,7 @@ void Abe::Motion_114_DoorEnter_459470()
                 {
                     gpThrowableArray_5D1E2C->Remove_49AA00(field_1A2_throwable_count);
                     field_1A2_throwable_count = 0;
-                    field_throwableType = AETypes::eNone_0;
+                    field_chaos_throwableType = AETypes::eNone_0;
                 }
             }
 

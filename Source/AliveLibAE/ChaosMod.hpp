@@ -41,6 +41,7 @@ enum ChaosEffect : u16
     FlipScreenY,
     BouncyThrowables,
     SpawnUXBs,
+    Fade,
 };
 
 class ChaosMod final

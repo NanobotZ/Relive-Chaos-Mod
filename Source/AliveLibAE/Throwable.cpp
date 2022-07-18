@@ -45,7 +45,7 @@ const AETypes throwable_types_55FAFC[252] = {
 
 EXPORT BaseThrowable* CCSTD Make_Throwable_49AF30(FP xpos, FP ypos, s16 count)
 {
-    auto throwableType = sActiveHero_5C1B68->field_throwableType == AETypes::eNone_0 ? throwable_types_55FAFC[gMap_5C3030.field_22_overlayID] : sActiveHero_5C1B68->field_throwableType;
+    auto throwableType = sActiveHero_5C1B68->field_chaos_throwableType == AETypes::eNone_0 ? throwable_types_55FAFC[gMap_5C3030.field_22_overlayID] : sActiveHero_5C1B68->field_chaos_throwableType;
     ChaosModHelpers::LoadThrowableResources(throwableType);
     switch (throwableType)
     {

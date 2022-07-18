@@ -22,9 +22,9 @@ void CCSTD FreeResourceArray_49AEC0(DynamicArrayT<u8*>* pArray)
 
 void CC LoadRockTypes_49AB30(LevelIds levelNumber, u16 pathNumber)
 {
-    if (sActiveHero_5C1B68->field_throwableType != AETypes::eNone_0)
+    if (sActiveHero_5C1B68->field_chaos_throwableType != AETypes::eNone_0)
     {
-        ChaosModHelpers::LoadThrowableResources(sActiveHero_5C1B68->field_throwableType);
+        ChaosModHelpers::LoadThrowableResources(sActiveHero_5C1B68->field_chaos_throwableType);
         return;
     }
 
