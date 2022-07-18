@@ -220,7 +220,7 @@ void CircularFade::vUpdate_4CE380()
         field_1B8_fade_colour += field_1BA_speed;
         if (field_F4_flags.Get(Flags::eBit1_FadeIn))
         {
-            if (field_1B8_fade_colour > createdByChaosMod ? 140 : 255)
+            if (field_1B8_fade_colour > (createdByChaosMod ? 140 : 255))
             {
                 field_1B8_fade_colour = createdByChaosMod ? 140 : 255;
             }

@@ -1633,6 +1633,8 @@ void Abe::Update_449DC0()
 
                 pCircularFade->field_B8_xpos = field_B8_xpos;
                 pCircularFade->field_BC_ypos = field_BC_ypos;
+                pCircularFade->field_CC_sprite_scale = field_CC_sprite_scale * FP_FromInteger(2);
+                pCircularFade->field_20_animation.field_14_scale = field_CC_sprite_scale * FP_FromInteger(2);
             }
             else
             {
