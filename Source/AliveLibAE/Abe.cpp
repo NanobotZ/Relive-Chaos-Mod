@@ -1624,7 +1624,7 @@ void Abe::Update_449DC0()
             if (pObj)
             {
                 auto pCircularFade = static_cast<CircularFade*>(pObj);
-                
+
                 if (chaosMod.getEffectDuration() < 2)
                 {
                     pCircularFade->VFadeIn_4CE300(0, 1);
@@ -1642,6 +1642,47 @@ void Abe::Update_449DC0()
             }
         }
 
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::GiveRedRing)
+    {
+        Free_Shrykull_Resources_45AA90();
+        field_168_ring_pulse_timer = sGnFrame_5C1B84 + 200000;
+        field_16C_bHaveShrykull = 0;
+        field_16E_bHaveInvisiblity = 0;
+        field_1AC_flags.Clear(Flags_1AC::e1AC_eBit15_have_healing);
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::GiveShrykullRing)
+    {
+        ChaosModHelpers::LoadShrykullResources();
+        Get_Shrykull_Resources_45AA20();
+        field_168_ring_pulse_timer = sGnFrame_5C1B84 + 200000;
+        field_16C_bHaveShrykull = TRUE;
+        field_16E_bHaveInvisiblity = 0;
+        field_1AC_flags.Clear(Flags_1AC::e1AC_eBit15_have_healing);
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::GiveInvisibilityRing)
+    {
+        Free_Shrykull_Resources_45AA90();
+        field_168_ring_pulse_timer = sGnFrame_5C1B84 + 200000;
+        field_16C_bHaveShrykull = 0;
+        field_16E_bHaveInvisiblity = TRUE;
+        field_1AC_flags.Clear(Flags_1AC::e1AC_eBit15_have_healing);
+        chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::GiveHealingRing)
+    {
+        Free_Shrykull_Resources_45AA90();
+        field_168_ring_pulse_timer = sGnFrame_5C1B84 + 200000;
+        field_16E_bHaveInvisiblity = 0;
+        field_16C_bHaveShrykull = 0;
+        field_1AC_flags.Set(Flags_1AC::e1AC_eBit15_have_healing);
         chaosMod.markEffectAsUsed();
     }
 

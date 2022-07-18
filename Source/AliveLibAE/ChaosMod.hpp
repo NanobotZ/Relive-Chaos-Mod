@@ -42,6 +42,10 @@ enum ChaosEffect : u16
     BouncyThrowables,
     SpawnUXBs,
     Fade,
+    GiveRedRing,
+    GiveShrykullRing,
+    GiveInvisibilityRing,
+    GiveHealingRing,
 };
 
 class ChaosMod final

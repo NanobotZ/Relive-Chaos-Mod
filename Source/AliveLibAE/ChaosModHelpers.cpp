@@ -141,6 +141,39 @@ u16 ChaosModHelpers::AddNewTLV(Path_TLV* newTlv)
     return 0;
 }
 
+void ChaosModHelpers::LoadShrykullResources()
+{
+    if (!ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, AEResourceID::kShrmorphResID, FALSE, FALSE))
+    {
+        ResourceManager::LoadResourceFile_49C170("ABEMORPH.BAN", nullptr);
+    }
+
+    if (!ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, AEResourceID::kShrmorphResID, FALSE, FALSE))
+    {
+        LoadResourceFromAnotherLvl(ResourceManager::Resource_Animation, AEResourceID::kShrmorphResID, LevelIds::eBarracks_6, "ABEMORPH.BAN");
+    }
+
+    if (!ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, AEResourceID::kShrmorphResID, FALSE, FALSE))
+    {
+        ResourceManager::LoadResourceFile_49C170("SHRYPORT.BND", nullptr);
+    }
+
+    if (!ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, AEResourceID::kShrmorphResID, FALSE, FALSE))
+    {
+        LoadResourceFromAnotherLvl(ResourceManager::Resource_Animation, AEResourceID::kShrmorphResID, LevelIds::eBarracks_6, "SHRYPORT.BND");
+    }
+
+    if (!ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, AEResourceID::kSplineResID, FALSE, FALSE))
+    {
+        ResourceManager::LoadResourceFile_49C170("SPLINE.BAN", nullptr);
+    }
+
+    if (!ResourceManager::GetLoadedResource_49C2A0(ResourceManager::Resource_Animation, AEResourceID::kSplineResID, FALSE, FALSE))
+    {
+        LoadResourceFromAnotherLvl(ResourceManager::Resource_Animation, AEResourceID::kSplineResID, LevelIds::eBarracks_6, "SPLINE.BAN");
+    }
+}
+
 
 
 void ChaosModHelpers::LoadSlogResources()
@@ -426,7 +459,7 @@ UXB* ChaosModHelpers::SpawnUXB(s16 xpos, s16 ypos, FP scale, Path_UXB::StartStat
 
     TlvItemInfoUnion tlv;
     tlv.all = 0xFFFFFFFF;
-    
+
     LoadUXBResources();
 
 

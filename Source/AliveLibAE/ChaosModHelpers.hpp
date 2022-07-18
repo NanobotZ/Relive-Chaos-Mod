@@ -19,6 +19,8 @@ void LoadThrowableResources(AETypes grenadeType);
 
 u16 AddNewTLV(Path_TLV* newTlv);
 
+void LoadShrykullResources();
+
 
 void LoadSlogResources();
 
