@@ -1728,6 +1728,8 @@ void Abe::Update_449DC0()
                 const FP velY = field_CC_sprite_scale * FP_FromDouble(-13);
                 field_C8_vely = velY;
                 field_BC_ypos += velY;
+
+                chaosMod.markEffectAsUsed();
             }
         }
     }
