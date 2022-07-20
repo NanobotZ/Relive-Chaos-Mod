@@ -944,6 +944,7 @@ Abe* Abe::ctor_44AD10(s32 /*frameTableOffset*/, s32 /*r*/, s32 /*g*/, s32 /*b*/)
 
     field_chaos_throwableType = AETypes::eNone_0;
     field_chaos_fade_obj_id = -1;
+    field_double_jumped = FALSE;
 
     return this;
 }
@@ -1684,6 +1685,51 @@ void Abe::Update_449DC0()
         field_16C_bHaveShrykull = 0;
         field_1AC_flags.Set(Flags_1AC::e1AC_eBit15_have_healing);
         chaosMod.markEffectAsUsed();
+    }
+
+    if (activeEffect == ChaosEffect::DoubleJump && !field_double_jumped)
+    {
+        if (Input().isPressed(sInputKey_Hop_5550E0) || Input().isPressed(sInputKey_Up_5550D8))
+        {
+            s16 newMotion = 0;
+            double vel = 0.0;
+            switch (field_106_current_motion)
+            {
+                case eAbeMotions::Motion_31_RunJumpMid_452C10:
+                    newMotion = eAbeMotions::Motion_30_RunJumpBegin_4532E0;
+                    vel = 7.6;
+                    break;
+                case eAbeMotions::Motion_28_HopMid_451C50:
+                case eAbeMotions::Motion_3_Fall_459B60:
+                case eAbeMotions::jMotion_85_Fall_455070:
+                    newMotion = eAbeMotions::Motion_27_HopBegin_4521C0;
+                    vel = 13.57;
+                    break;
+                default:
+                    break;
+            }
+
+            if (newMotion)
+            {
+                field_double_jumped = TRUE;
+                field_106_current_motion = newMotion;
+
+                FP velX = {};
+                if (Input().isPressed(sInputKey_Left_5550D4))
+                    velX = FP_FromDouble(-vel);
+                else if (Input().isPressed(sInputKey_Right_5550D0))
+                    velX = FP_FromDouble(vel);
+                else
+                    velX = field_C4_velx < FP_FromInteger(0) ? FP_FromDouble(-vel) : FP_FromDouble(vel);
+
+                field_C4_velx = field_CC_sprite_scale * velX;
+
+                //const FP velY = field_CC_sprite_scale * FP_FromDouble(-9.6);
+                const FP velY = field_CC_sprite_scale * FP_FromDouble(-13);
+                field_C8_vely = velY;
+                field_BC_ypos += velY;
+            }
+        }
     }
 
 
@@ -3375,6 +3421,8 @@ static bool isEdgeGrabbable(Path_Edge* pEdge, BaseAliveGameObject* pObj)
 
 void Abe::Motion_0_Idle_44EEB0()
 {
+    field_double_jumped = FALSE;
+
     if (Input_IsChanting_45F260() && !(field_1AC_flags.Get(Flags_1AC::e1AC_Bit6_prevent_chanting)))
     {
         if (field_168_ring_pulse_timer && field_16C_bHaveShrykull)
@@ -3783,6 +3831,8 @@ void Abe::Motion_0_Idle_44EEB0()
 
 void Abe::Motion_1_WalkLoop_44FBA0()
 {
+    field_double_jumped = FALSE;
+
     field_118_prev_held |= Input().field_0_pads[sCurrentControllerIndex_5C1BBE].field_0_pressed;
 
     Event_Broadcast_422BC0(kEventNoise, this);
@@ -5476,6 +5526,8 @@ void Abe::DoRunJump()
 
 void Abe::Motion_33_RunLoop_4508E0()
 {
+    field_double_jumped = FALSE;
+
     field_118_prev_held |= Input().field_0_pads[sCurrentControllerIndex_5C1BBE].field_0_pressed;
 
     Event_Broadcast_422BC0(kEventNoise, this);

@@ -742,10 +742,12 @@ public:
 
     s32 field_1B4_padding;
     s32 field_1B8_padding;
+
     AETypes field_chaos_throwableType;
     s32 field_chaos_fade_obj_id;
+    s8 field_double_jumped;
 };
-ALIVE_ASSERT_SIZEOF(Abe, 0x1C2);
+ALIVE_ASSERT_SIZEOF(Abe, 0x1C3);
 
 ALIVE_VAR_EXTERN(Abe*, sActiveHero_5C1B68);
 ALIVE_VAR_EXTERN(BaseAliveGameObject*, sControlledCharacter_5C1B8C);
