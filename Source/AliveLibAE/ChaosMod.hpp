@@ -47,6 +47,7 @@ enum ChaosEffect : u16
     GiveInvisibilityRing,
     GiveHealingRing,
     DoubleJump,
+    FartCommunication,
 };
 
 class ChaosMod final

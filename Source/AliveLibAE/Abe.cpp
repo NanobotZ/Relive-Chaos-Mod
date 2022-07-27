@@ -10422,6 +10422,12 @@ static void playAbeSFX(MudSounds idx, s16 volume, s32 pitch)
 
 EXPORT void CC Mudokon_SFX_457EC0(MudSounds idx, s16 volume, s32 pitch, BaseAliveGameObject* pHero)
 {
+    if (chaosMod.getActiveEffect() == ChaosEffect::FartCommunication && idx != MudSounds::eFart_7)
+    {
+        idx = MudSounds::eFart_7;
+        chaosMod.markEffectAsUsed();
+    }
+
     switch (idx)
     {
         case MudSounds::eOops_14:
